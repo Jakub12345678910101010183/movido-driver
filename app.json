@@ -1,0 +1,73 @@
+{
+  "expo": {
+    "name": "Movido Driver",
+    "slug": "movido-driver",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "movido-driver",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0a0a0f"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "uk.movidologistics.driver",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Movido Driver uses your location for navigation and automatic job updates.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Movido Driver uses your location in background for geofencing and auto-arrive.",
+        "NSCameraUsageDescription": "Movido Driver uses the camera for Proof of Delivery photos and vehicle inspection.",
+        "NSPhotoLibraryUsageDescription": "Movido Driver accesses photos for Proof of Delivery."
+      },
+      "backgroundModes": ["location", "fetch"]
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0a0a0f"
+      },
+      "package": "uk.movidologistics.driver",
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "VIBRATE",
+        "RECEIVE_BOOT_COMPLETED"
+      ],
+      "googleServicesFile": "./google-services.json"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Movido Driver uses location for navigation and auto-arrive.",
+          "isAndroidBackgroundLocationEnabled": true
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Movido Driver uses the camera for Proof of Delivery."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#00d4ff"
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
