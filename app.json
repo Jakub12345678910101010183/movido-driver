@@ -21,9 +21,7 @@
         "NSCameraUsageDescription": "MOViDO Driver uses the camera for proof of delivery, vehicle check defects, incident and fuel receipt photos.",
         "NSPhotoLibraryUsageDescription": "MOViDO Driver can attach an existing photo to a delivery, check, incident or fuel receipt.",
         "UIBackgroundModes": [
-          "location",
-          "fetch",
-          "remote-notification"
+          "location"
         ],
         "LSApplicationQueriesSchemes": [
           "comgooglemaps",

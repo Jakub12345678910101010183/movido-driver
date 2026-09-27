@@ -3,6 +3,7 @@
 import * as FS from "expo-file-system/legacy";
 import { ImageManipulator, SaveFormat } from "expo-image-manipulator";
 import * as ImagePicker from "expo-image-picker";
+import { Platform } from "react-native";
 
 const DIR = `${FS.documentDirectory}outbox/`;
 const MAX_EDGE = 1600; // enough to read a label or a dent; ~200–400 KB
@@ -20,8 +21,12 @@ export async function takePhoto(): Promise<CaptureResult> {
 }
 
 export async function pickPhoto(): Promise<CaptureResult> {
-  const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-  if (!perm.granted) return { error: "permission" };
+  // Android uses the system photo picker, which needs no storage permission
+  // (and the storage permissions are blocked in app.json).
+  if (Platform.OS === "ios") {
+    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!perm.granted) return { error: "permission" };
+  }
   try {
     const r = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], quality: 0.8, exif: false });
     if (r.canceled || !r.assets?.[0]) return { error: "cancelled" };
