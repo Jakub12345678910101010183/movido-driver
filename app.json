@@ -1,73 +1,106 @@
 {
   "expo": {
-    "name": "Movido Driver",
+    "name": "MOViDO Driver",
     "slug": "movido-driver",
+    "scheme": "movidodriver",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "scheme": "movido-driver",
     "userInterfaceStyle": "dark",
-    "splash": {
-      "image": "./assets/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#0a0a0f"
-    },
-    "assetBundlePatterns": ["**/*"],
+    "backgroundColor": "#000001",
     "ios": {
-      "supportsTablet": false,
       "bundleIdentifier": "uk.movidologistics.driver",
-      "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "Movido Driver uses your location for navigation and automatic job updates.",
-        "NSLocationAlwaysAndWhenInUseUsageDescription": "Movido Driver uses your location in background for geofencing and auto-arrive.",
-        "NSCameraUsageDescription": "Movido Driver uses the camera for Proof of Delivery photos and vehicle inspection.",
-        "NSPhotoLibraryUsageDescription": "Movido Driver accesses photos for Proof of Delivery."
+      "buildNumber": "1",
+      "supportsTablet": false,
+      "config": {
+        "usesNonExemptEncryption": false
       },
-      "backgroundModes": ["location", "fetch"]
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "MOViDO Driver shares your location with your office while you have a job in progress, so they can see where the vehicle is and record arrivals at stops.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Allow location all the time so MOViDO Driver can keep recording your route and arrivals at stops while the phone is locked or you are using navigation. Location is only shared while you have a job in progress.",
+        "NSCameraUsageDescription": "MOViDO Driver uses the camera for proof of delivery, vehicle check defects, incident and fuel receipt photos.",
+        "NSPhotoLibraryUsageDescription": "MOViDO Driver can attach an existing photo to a delivery, check, incident or fuel receipt.",
+        "UIBackgroundModes": [
+          "location",
+          "fetch",
+          "remote-notification"
+        ],
+        "LSApplicationQueriesSchemes": [
+          "comgooglemaps",
+          "waze",
+          "tomtomgo"
+        ]
+      }
     },
     "android": {
+      "package": "uk.movidologistics.driver",
+      "versionCode": 1,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#0a0a0f"
+        "backgroundColor": "#000001"
       },
-      "package": "uk.movidologistics.driver",
       "permissions": [
-        "ACCESS_FINE_LOCATION",
         "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
         "ACCESS_BACKGROUND_LOCATION",
+        "FOREGROUND_SERVICE",
+        "FOREGROUND_SERVICE_LOCATION",
         "CAMERA",
-        "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE",
-        "VIBRATE",
-        "RECEIVE_BOOT_COMPLETED"
+        "POST_NOTIFICATIONS",
+        "VIBRATE"
       ],
-      "googleServicesFile": "./google-services.json"
+      "blockedPermissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE"
+      ]
     },
     "plugins": [
       "expo-router",
       "expo-secure-store",
+      "expo-font",
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "Movido Driver uses location for navigation and auto-arrive.",
-          "isAndroidBackgroundLocationEnabled": true
+          "locationAlwaysAndWhenInUsePermission": "Allow location all the time so MOViDO Driver can keep recording your route and arrivals at stops while the phone is locked or you are using navigation. Location is only shared while you have a job in progress.",
+          "locationWhenInUsePermission": "MOViDO Driver shares your location with your office while you have a job in progress.",
+          "isAndroidBackgroundLocationEnabled": true,
+          "isAndroidForegroundServiceEnabled": true,
+          "isIosBackgroundLocationEnabled": true
         }
       ],
       [
-        "expo-camera",
+        "expo-image-picker",
         {
-          "cameraPermission": "Movido Driver uses the camera for Proof of Delivery."
+          "cameraPermission": "MOViDO Driver uses the camera for proof of delivery, vehicle check defects, incident and fuel receipt photos.",
+          "photosPermission": "MOViDO Driver can attach an existing photo to a delivery, check, incident or fuel receipt.",
+          "microphonePermission": false
         }
       ],
       [
         "expo-notifications",
         {
           "icon": "./assets/notification-icon.png",
-          "color": "#00d4ff"
+          "color": "#00f1ec",
+          "defaultChannel": "default"
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash.png",
+          "backgroundColor": "#000001",
+          "imageWidth": 160
         }
       ]
     ],
     "experiments": {
-      "typedRoutes": true
+      "typedRoutes": false
+    },
+    "extra": {
+      "eas": {
+        "projectId": ""
+      }
     }
   }
 }
