@@ -11,7 +11,7 @@ Expo SDK 57 · React Native 0.86 · expo-router · Supabase (RLS + `driver_*` RP
 |---|---|
 | Auth | Supabase email/password. The office invites a driver, the driver sets a password on the web page, then signs in here. The session is stored in the Keychain/Keystore. Disabled and non-driver accounts are refused. |
 | Jobs | Read through RLS (the driver's own jobs only), with live updates via Supabase Realtime and a per-driver offline cache. |
-| Multi-stop | `driver_start_job`, `driver_mark_stop(job, stop, status, at)`. A late sync keeps the time the driver acted, and replays never move a stop back. |
+| Multi-stop | `driver_start_job`, `driver_confirm_stop(job, stop, status, at, lat, lng, accuracy)` with the position taken at the tap. A late sync keeps the time the driver acted (max 12 h back), and replays never move a stop back. |
 | GPS | Background task (`expo-location` + `expo-task-manager`) → local queue → `driver_report_locations` (batch, timestamped). Server geofencing marks arrivals once. Runs only while a job is in progress, at 100 m / 60 s by default (per company: `app_settings.driver_gps_*`). |
 | POD | Photo resized to ≤1600 px JPEG → `pod-photos/<company>/<job>/<request>.jpg`, plus signature, recipient, notes, time and location, then `driver_complete_job`. |
 | Checks / incidents / fuel | `driver_submit_vehicle_check`, `driver_report_incident`, `driver_log_fuel`. Photos go to `driver-uploads/<company>/<driver>/…`. The server computes the check result and fuel cost. |
