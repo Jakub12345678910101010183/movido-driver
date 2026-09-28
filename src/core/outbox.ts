@@ -69,6 +69,11 @@ export function filesOf(a: OutboxAction): LocalFile[] {
   }
 }
 
+/** The job whose stop order an action depends on, or null. */
+function jobOf(a: OutboxAction): number | null {
+  return a.kind === "start_job" || a.kind === "mark_stop" || a.kind === "complete_job" ? a.jobId : null;
+}
+
 export class Outbox {
   private items: OutboxItem[] = [];
   private loaded = false;
@@ -142,10 +147,18 @@ export class Outbox {
   private async run(): Promise<ProcessSummary> {
     await this.load();
     const summary: ProcessSummary = { sent: 0, failed: 0, waiting: 0, offline: false };
-    // In order: a stop must reach the server before the job's completion.
+    // In order: a stop must reach the server before the next stop and before
+    // the job's completion (the server refuses them out of order), so a job
+    // action that is waiting holds back that job's later actions.
+    const heldJobs = new Set<number>();
     for (const item of [...this.items]) {
       if (item.state !== "pending") continue;
-      if (item.nextAttemptAt > this.now()) { summary.waiting++; continue; }
+      const job = jobOf(item.action);
+      if (item.nextAttemptAt > this.now() || (job !== null && heldJobs.has(job))) {
+        if (job !== null) heldJobs.add(job);
+        summary.waiting++;
+        continue;
+      }
       const err = await this.send(item);
       if (!err) {
         this.items = this.items.filter((i) => i.id !== item.id);
@@ -217,6 +230,9 @@ export class Outbox {
       case "read_messages": r = await api.markMessagesRead(a.ids); break;
     }
     item.result = r.data;
+    // A replayed "delivered" (response lost after the server saved it) or an
+    // arrival for a stop already delivered: the stop is already past this action.
+    if (a.kind === "mark_stop" && r.error?.message?.includes("STOP_ALREADY_COMPLETED")) return null;
     return r.error;
   }
 }
