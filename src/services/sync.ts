@@ -24,8 +24,9 @@ let timer: ReturnType<typeof setTimeout> | null = null;
 export async function syncNow(): Promise<void> {
   if (timer) { clearTimeout(timer); timer = null; }
   try {
-    await outbox.process();
+    // GPS first: a stop action can be confirmed by the driver's recorded track.
     await gpsQueue.flush(api);
+    await outbox.process();
   } finally {
     const next = outbox.nextRetryAt();
     if (next !== null) timer = setTimeout(() => { void syncNow(); }, Math.max(1_000, next - Date.now()));

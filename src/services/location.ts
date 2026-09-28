@@ -9,7 +9,7 @@
 import * as Location from "expo-location";
 import * as TaskManager from "expo-task-manager";
 import { Platform } from "react-native";
-import { acquirePosition, type LatLng } from "../core/position.ts";
+import { acquirePosition, within, type LatLng } from "../core/position.ts";
 import type { GpsPoint } from "../core/types.ts";
 import { api } from "../lib/supabase";
 import { colors } from "../theme";
@@ -87,6 +87,23 @@ export async function stopTracking(): Promise<void> {
 }
 
 /** A recent position for stamping POD / incidents / fuel / checks. Bounded: see core/position. */
+/**
+ * Where the driver is when they tap Arrived / Delivered: a fresh GPS fix with
+ * its accuracy and time (a cached fix at most 60 s old if none comes in 10 s).
+ * Null without permission or a fix; the server then uses the recorded track.
+ */
+export async function stopFix(): Promise<{ lat: number; lng: number; accuracy: number | null; at: string } | null> {
+  const toFix = (l: Location.LocationObject | null) => l ? {
+    lat: l.coords.latitude, lng: l.coords.longitude, accuracy: l.coords.accuracy ?? null, at: new Date(l.timestamp).toISOString() } : null;
+  try {
+    if ((await Location.getForegroundPermissionsAsync()).status !== "granted") return null;
+    const fresh = await within(Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High }), 10_000, null);
+    return toFix(fresh ?? await within(Location.getLastKnownPositionAsync({ maxAge: 60_000, requiredAccuracy: 100 }), 1_500, null));
+  } catch {
+    return null;
+  }
+}
+
 export function currentPosition(): Promise<LatLng | null> {
   return acquirePosition({
     ready: async () => {

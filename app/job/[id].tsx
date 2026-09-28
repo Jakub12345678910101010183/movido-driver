@@ -6,7 +6,7 @@ import { AlertTriangle, CheckCircle2, Circle, CircleDot, Navigation, PackageChec
 import React, { useEffect, useState } from "react";
 import { Linking, Text, View } from "react-native";
 import { legsOf, nextStopIndex, parseStops, readyForPod, type RouteLeg } from "../../src/core/stops.ts";
-import { currentPosition } from "../../src/services/location";
+import { currentPosition, stopFix } from "../../src/services/location";
 import { formatClock, formatDistance, formatMinutes, openNavigation, truckRoute, type RouteSummary } from "../../src/services/navigation";
 import { useApp } from "../../src/state/AppContext";
 import { Banner, Button, Card, Empty, Pill, Row, Screen, Section } from "../../src/ui";
@@ -50,8 +50,13 @@ export default function JobScreen() {
 
   const closed = job.status === "completed" || job.status === "cancelled";
   const run = async (key: string, f: () => Promise<unknown>) => { setBusy(key); try { await f(); } finally { setBusy(null); } };
+  // The server confirms the driver is at the stop: send where they are now.
   const markStop = (i: number, status: "arrived" | "completed") =>
-    run(`${status}-${i}`, () => act({ kind: "mark_stop", jobId: job.id, stopIndex: i, status, at: new Date().toISOString() }));
+    run(`${status}-${i}`, async () => {
+      const fix = await stopFix();
+      await act({ kind: "mark_stop", jobId: job.id, stopIndex: i, status, at: fix?.at ?? new Date().toISOString(),
+        lat: fix?.lat ?? null, lng: fix?.lng ?? null, accuracy_m: fix?.accuracy ?? null });
+    });
 
   const actions = () => {
     if (closed) return null;

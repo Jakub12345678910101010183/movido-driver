@@ -51,8 +51,10 @@ export function createApi(sb: SupabaseClient) {
       return wrap(data as string, error);
     },
 
-    async markStop(jobId: number, stopIndex: number, status: "arrived" | "completed", at: string): Promise<Result<unknown>> {
-      const { data, error } = await sb.rpc("driver_mark_stop", { p_job_id: jobId, p_stop_index: stopIndex, p_status: status, p_at: at });
+    async markStop(jobId: number, stopIndex: number, status: "arrived" | "completed", at: string,
+      lat: number | null = null, lng: number | null = null, accuracy: number | null = null): Promise<Result<unknown>> {
+      const { data, error } = await sb.rpc("driver_mark_stop", { p_job_id: jobId, p_stop_index: stopIndex, p_status: status, p_at: at,
+        p_lat: lat, p_lng: lng, p_accuracy_m: accuracy });
       return wrap(data, error);
     },
 

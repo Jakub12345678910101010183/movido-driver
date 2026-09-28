@@ -23,7 +23,8 @@ export interface LocalFile { uri: string; bucket: "pod-photos" | "driver-uploads
 
 export type OutboxAction =
   | { kind: "start_job"; jobId: number }
-  | { kind: "mark_stop"; jobId: number; stopIndex: number; status: "arrived" | "completed"; at: string }
+  | { kind: "mark_stop"; jobId: number; stopIndex: number; status: "arrived" | "completed"; at: string;
+      lat?: number | null; lng?: number | null; accuracy_m?: number | null } // where the driver tapped (fix time = at)
   | { kind: "complete_job"; jobId: number; photo: LocalFile | null; signature: string | null; recipient: string | null;
       notes: string | null; lat: number | null; lng: number | null; capturedAt: string }
   | { kind: "incident"; type: IncidentType; description: string; jobId: number | null; lat: number | null; lng: number | null;
@@ -206,7 +207,7 @@ export class Outbox {
     let r: { error: BackendError | null; data?: unknown };
     switch (a.kind) {
       case "start_job": r = await api.startJob(a.jobId); break;
-      case "mark_stop": r = await api.markStop(a.jobId, a.stopIndex, a.status, a.at); break;
+      case "mark_stop": r = await api.markStop(a.jobId, a.stopIndex, a.status, a.at, a.lat ?? null, a.lng ?? null, a.accuracy_m ?? null); break;
       case "complete_job":
         r = await api.completeJob({ jobId: a.jobId, photoPath: a.photo?.path ?? null, signature: a.signature,
           recipient: a.recipient, notes: a.notes, lat: a.lat, lng: a.lng, capturedAt: a.capturedAt });
