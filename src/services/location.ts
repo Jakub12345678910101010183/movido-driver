@@ -9,6 +9,7 @@
 import * as Location from "expo-location";
 import * as TaskManager from "expo-task-manager";
 import { Platform } from "react-native";
+import { acquirePosition, type LatLng } from "../core/position.ts";
 import type { GpsPoint } from "../core/types.ts";
 import { api } from "../lib/supabase";
 import { colors } from "../theme";
@@ -85,17 +86,20 @@ export async function stopTracking(): Promise<void> {
   if (await isTracking()) await Location.stopLocationUpdatesAsync(LOCATION_TASK).catch(() => {});
 }
 
-/** A recent position for stamping POD / incidents / fuel. Never blocks for long. */
-export async function currentPosition(): Promise<{ lat: number; lng: number } | null> {
-  try {
-    const perm = await Location.getForegroundPermissionsAsync();
-    if (perm.status !== "granted") return null;
-    const last = await Location.getLastKnownPositionAsync({ maxAge: 5 * 60_000, requiredAccuracy: 200 });
-    if (last) return { lat: last.coords.latitude, lng: last.coords.longitude };
-    const fix = await Promise.race([
-      Location.getCurrentPositionAsync({ accuracy: Platform.OS === "android" ? Location.Accuracy.High : Location.Accuracy.Balanced }),
-      new Promise<null>((r) => setTimeout(() => r(null), 8000)),
-    ]);
-    return fix ? { lat: fix.coords.latitude, lng: fix.coords.longitude } : null;
-  } catch { return null; }
+/** A recent position for stamping POD / incidents / fuel / checks. Bounded: see core/position. */
+export function currentPosition(): Promise<LatLng | null> {
+  return acquirePosition({
+    ready: async () => {
+      if ((await Location.getForegroundPermissionsAsync()).status !== "granted") return "no_permission";
+      return (await Location.hasServicesEnabledAsync()) ? "ok" : "services_off";
+    },
+    lastKnown: async () => {
+      const last = await Location.getLastKnownPositionAsync({ maxAge: 5 * 60_000, requiredAccuracy: 200 });
+      return last ? { lat: last.coords.latitude, lng: last.coords.longitude } : null;
+    },
+    fresh: async () => {
+      const fix = await Location.getCurrentPositionAsync({ accuracy: Platform.OS === "android" ? Location.Accuracy.High : Location.Accuracy.Balanced });
+      return { lat: fix.coords.latitude, lng: fix.coords.longitude };
+    },
+  });
 }
