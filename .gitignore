@@ -16,3 +16,5 @@ ios/
 android/
 test/ui/dist/
 test/ui/shots/
+# Firebase client config for FCM (EAS file variable GOOGLE_SERVICES_JSON)
+google-services.json

@@ -14,7 +14,7 @@
     "build:preview": "eas build --profile preview --platform all",
     "build:production": "eas build --profile production --platform all",
     "test:ui": "MOVIDO_UI_TEST=1 expo export --platform web --output-dir test/ui/dist && node test/ui/run.mjs",
-    "test:unit": "node --experimental-strip-types --no-warnings test/position.test.ts"
+    "test:unit": "node --experimental-strip-types --no-warnings test/position.test.ts && node --experimental-strip-types --no-warnings test/push.test.ts"
   },
   "dependencies": {
     "@expo-google-fonts/inter": "^0.4.2",

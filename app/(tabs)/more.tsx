@@ -5,6 +5,7 @@ import { Bell, ClipboardCheck, Fuel, LogOut, MapPin, RefreshCw, TriangleAlert, U
 import React from "react";
 import { Alert, Linking, Text, View } from "react-native";
 import { SUPPORT_EMAIL } from "../../src/config";
+import { turnOnAction } from "../../src/core/push.ts";
 import { useApp } from "../../src/state/AppContext";
 import { Banner, Button, Card, Row, Screen, Section } from "../../src/ui";
 import { colors, space, type } from "../../src/theme";
@@ -26,7 +27,8 @@ export default function More() {
     );
   };
 
-  const pushText = { registered: "On", denied: "Off — allow in Settings", unavailable: "Not available on this device", not_configured: "Not configured in this build", error: "Could not register" }[push ?? "unavailable"] ?? "…";
+  const pushText = push ? { registered: "On", not_asked: "Off", denied: "Off — allow in Settings", unavailable: "Not available on this device", not_configured: "Not configured in this build", error: "Could not register" }[push] : "…";
+  const pushAction = turnOnAction(push);
   const locText = gps.permission === "granted_always" ? "Always (recommended)" : gps.permission === "granted_foreground" ? "Only while app is open" : gps.permission === "services_off" ? "Location services off" : gps.permission === "denied" ? "Denied" : "Not asked yet";
 
   return (
@@ -62,9 +64,9 @@ export default function More() {
             <Button label="Location settings" variant="ghost" size="md" icon={<MapPin size={18} color={colors.foreground} />} onPress={() => router.push("/sync")} />
           ) : null}
           <Row label="Notifications" value={pushText} />
-          {push !== "registered" && push !== "unavailable" && push !== "not_configured" ? (
-            <Button label="Turn on notifications" variant="ghost" size="md" icon={<Bell size={18} color={colors.foreground} />}
-              onPress={() => (push === "denied" ? void Linking.openSettings() : void enablePush())} />
+          {pushAction !== "none" ? (
+            <Button label={pushAction === "settings" ? "Open Settings to allow notifications" : "Turn on notifications"} variant="ghost" size="md" icon={<Bell size={18} color={colors.foreground} />}
+              onPress={() => (pushAction === "settings" ? void Linking.openSettings() : void enablePush())} />
           ) : null}
           <Row label="App version" value={`${Application.nativeApplicationVersion ?? "1.0.0"} (${Application.nativeBuildVersion ?? "dev"})`} mono />
         </Card>

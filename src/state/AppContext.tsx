@@ -10,6 +10,7 @@ import { GPS_DEFAULTS } from "../config";
 import { describeError } from "../core/errors.ts";
 import type { OutboxAction, OutboxItem } from "../core/outbox.ts";
 import { applyPending, type PendingMarks } from "../core/overlay.ts";
+import { shouldRecheckOnAppState } from "../core/push.ts";
 import type { DriverProfile, Job, Message } from "../core/types.ts";
 import { api, supabase } from "../lib/supabase";
 import { clearDriverData, readJSON, writeJSON } from "../lib/storage";
@@ -208,7 +209,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   // ---------- push ----------
   useEffect(() => {
-    if (auth === "ready" && profile) void registerForPush(profile.driver.id, false).then(setPush);
+    if (auth !== "ready" || !profile) return;
+    void registerForPush(profile.driver.id, false).then(setPush);
+    // Back from Settings (or anywhere): pick up a permission change without a restart.
+    let prev = AppState.currentState as string;
+    const sub = AppState.addEventListener("change", (next) => {
+      if (shouldRecheckOnAppState(prev, next)) void registerForPush(profile.driver.id, false).then(setPush);
+      prev = next;
+    });
+    return () => sub.remove();
   }, [auth, profile]);
   const enablePush = useCallback(async () => {
     if (profileRef.current) setPush(await registerForPush(profileRef.current.driver.id, true));
