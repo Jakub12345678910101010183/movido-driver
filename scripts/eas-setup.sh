@@ -37,4 +37,4 @@ for NAME in EXPO_PUBLIC_SUPABASE_URL EXPO_PUBLIC_SUPABASE_ANON_KEY EXPO_PUBLIC_T
     echo "set $NAME for $ENVIRONMENT ($VIS)"
   done
 done
-echo "Done. Variable names:"; $EAS env:list --environment preview --non-interactive 2>/dev/null | grep -oE "EXPO_PUBLIC_[A-Z_]+" | sort -u
+echo "Done. Variable names:"; $EAS env:list preview --format short 2>/dev/null | grep -oE "^EXPO_PUBLIC_[A-Z_]+" | sort -u
