@@ -42,6 +42,12 @@ async function compress(uri: string, w: number, h: number): Promise<string> {
   await FS.makeDirectoryAsync(DIR, { intermediates: true }).catch(() => {});
   const dest = `${DIR}${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`;
   await FS.copyAsync({ from: saved.uri, to: dest });
+  // Never keep an empty or missing file: it would be uploaded as an empty photo.
+  const info = await FS.getInfoAsync(dest);
+  if (!info.exists || !info.size) {
+    await FS.deleteAsync(dest, { idempotent: true }).catch(() => {});
+    throw new Error("EMPTY_PHOTO");
+  }
   return dest;
 }
 

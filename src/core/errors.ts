@@ -30,6 +30,8 @@ const MESSAGES: Record<string, string> = {
   INVALID_PRICE: "The price looks wrong. Check the receipt.",
   INVALID_MILEAGE: "The mileage looks wrong.",
   INVALID_PHOTOS: "One of the photos could not be attached.",
+  EMPTY_PHOTO: "Photo is empty — please retake it.",
+  PHOTO_MISSING: "Photo is no longer on this phone — please retake it.",
   INVALID_RECEIPT: "The receipt photo could not be attached.",
   INVALID_POSITION: "Your location could not be read.",
 };

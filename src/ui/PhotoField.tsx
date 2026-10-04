@@ -19,7 +19,7 @@ export function PhotoField({ label, uris, onChange, max = 1, required }: {
       if (r.error === "permission") {
         Alert.alert(source === "camera" ? "Camera permission required" : "Photo access required",
           "Allow access in Settings to attach photos.", [{ text: "Cancel", style: "cancel" }, { text: "Open Settings", onPress: () => void Linking.openSettings() }]);
-      } else if (r.error === "failed") Alert.alert("Photo not saved", "Please try again.");
+      } else if (r.error === "failed") Alert.alert("Photo not saved", "Please take the photo again.");
       return;
     }
     if (replace !== undefined) {

@@ -189,8 +189,11 @@ export class Outbox {
       if (item.uploaded.includes(f.path)) continue;
       let bytes: ArrayBuffer;
       try { bytes = await this.deps.readFile(f.uri); } catch {
-        return { code: "MV400", message: "INVALID_PHOTOS: the photo is no longer on this phone" };
+        return { code: "MV400", message: "PHOTO_MISSING: the photo is no longer on this phone" };
       }
+      // An empty file (failed save, full storage) must never be stored as the
+      // photo, least of all as proof of delivery: fail, do not retry, retake.
+      if (!bytes || bytes.byteLength === 0) return { code: "MV400", message: "EMPTY_PHOTO" };
       const r = await this.deps.api.upload(f.bucket, f.path, bytes, f.contentType);
       if (r.error) return r.error;
       item.uploaded.push(f.path);
