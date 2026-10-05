@@ -67,3 +67,33 @@ export async function registerPush(deps: PushDeps, ask: boolean, lastSaved: stri
     return { status: "error", token: null };
   }
 }
+
+/** Remembers, for this install, that the app has already shown the prompt by itself. */
+export type PromptMemory = { get(): Promise<boolean>; set(): Promise<void> };
+
+/** Registration runs at start only for a signed-in driver (the app has no other users). */
+export function shouldRegisterOnStart(auth: string, hasDriverProfile: boolean): boolean {
+  return auth === "ready" && hasDriverProfile;
+}
+
+/**
+ * Sign-in / app start (P-3). A fresh install is "undetermined" on Android 13+
+ * and iOS; checking only would never register a token, so job and office
+ * pushes would silently never arrive. Show the OS prompt by itself once per
+ * install (after the Android channel exists, see registerPush), never again:
+ * later the driver uses "Turn on notifications" or Settings. The prompt is
+ * remembered before it is shown; if that cannot be stored, it is not shown.
+ * Never throws.
+ */
+export async function registerPushOnStart(deps: PushDeps, memory: PromptMemory, lastSaved: string | null = null): Promise<{ status: PushStatus; token: string | null }> {
+  let ask = false;
+  try { ask = !(await memory.get()); } catch { ask = false; }
+  if (!ask) return registerPush(deps, false, lastSaved);
+  return registerPush({
+    ...deps,
+    requestPermission: async () => {
+      try { await memory.set(); } catch { return deps.getPermission(); }
+      return deps.requestPermission();
+    },
+  }, true, lastSaved);
+}

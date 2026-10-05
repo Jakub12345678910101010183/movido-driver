@@ -10,7 +10,8 @@ import Constants from "expo-constants";
 import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
-import { registerPush, type PushStatus } from "../core/push.ts";
+import { registerPush, registerPushOnStart, type PromptMemory, type PushStatus } from "../core/push.ts";
+import { kv } from "../lib/storage";
 import { api } from "../lib/supabase";
 import { colors } from "../theme";
 
@@ -29,12 +30,21 @@ export function easProjectId(): string | null {
 // re-check does not rewrite an unchanged token.
 let savedToken: { driverId: number; token: string } | null = null;
 
+// Outside the "movido." prefix on purpose: sign-out clears those keys, and the
+// app prompts by itself at most once per install, not once per sign-in.
+const PROMPTED_KEY = "install.push.prompted.v1";
+const promptMemory: PromptMemory = {
+  get: async () => (await kv.get(PROMPTED_KEY)) === "1",
+  set: () => kv.set(PROMPTED_KEY, "1"),
+};
+
 /**
- * ask=false: check only (sign-in, app back in foreground).
+ * ask=false: check only (app back in foreground).
+ * ask="once": sign-in / app start; prompts by itself once per install.
  * ask=true: show the Android/iOS prompt if it has not been answered for good.
  */
-export async function registerForPush(driverId: number, ask: boolean): Promise<PushStatus> {
-  const r = await registerPush({
+export async function registerForPush(driverId: number, ask: boolean | "once"): Promise<PushStatus> {
+  const deps = {
     isDevice: Device.isDevice,
     projectId: easProjectId(),
     prepare: async () => {
@@ -46,9 +56,11 @@ export async function registerForPush(driverId: number, ask: boolean): Promise<P
     },
     getPermission: async () => { const p = await Notifications.getPermissionsAsync(); return { status: p.status, canAskAgain: p.canAskAgain }; },
     requestPermission: async () => { const p = await Notifications.requestPermissionsAsync(); return { status: p.status, canAskAgain: p.canAskAgain }; },
-    getToken: async (projectId) => (await Notifications.getExpoPushTokenAsync({ projectId })).data,
-    saveToken: async (token) => !(await api.setPushToken(driverId, token)).error,
-  }, ask, savedToken?.driverId === driverId ? savedToken.token : null);
+    getToken: async (projectId: string) => (await Notifications.getExpoPushTokenAsync({ projectId })).data,
+    saveToken: async (token: string) => !(await api.setPushToken(driverId, token)).error,
+  };
+  const last = savedToken?.driverId === driverId ? savedToken.token : null;
+  const r = ask === "once" ? await registerPushOnStart(deps, promptMemory, last) : await registerPush(deps, ask, last);
   if (r.token) savedToken = { driverId, token: r.token };
   return r.status;
 }
