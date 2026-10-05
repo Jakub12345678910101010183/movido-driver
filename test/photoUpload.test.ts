@@ -112,7 +112,7 @@ const cases: [string, () => Promise<void>][] = [
     const s = await box.process();
     assert.deepEqual(s, { sent: 2, failed: 1, waiting: 0, offline: false });
     assert.deepEqual(calls, ["upload:p/other.jpg", "complete:2", "upload:p/retake.jpg", "complete:1"]);
-    assert.equal(box.list().length, 1); assert.equal(box.list()[0].state, "failed");
+    assert.equal(box.list().length, 0, "the successful retake replaces the rejected POD (W-1)");
   }],
   ["driver-facing messages", async () => {
     assert.equal(describeError({ code: "MV400", message: "EMPTY_PHOTO" }), "Photo is empty — please retake it.");

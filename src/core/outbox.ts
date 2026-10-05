@@ -75,6 +75,17 @@ function jobOf(a: OutboxAction): number | null {
   return a.kind === "start_job" || a.kind === "mark_stop" || a.kind === "complete_job" ? a.jobId : null;
 }
 
+/** The same driver step done again (a stop tapped again, a retaken POD). */
+function sameStep(a: OutboxAction, b: OutboxAction): boolean {
+  if (a.kind === "mark_stop" && b.kind === "mark_stop") return a.jobId === b.jobId && a.stopIndex === b.stopIndex && a.status === b.status;
+  if (a.kind === "complete_job" && b.kind === "complete_job") return a.jobId === b.jobId;
+  if (a.kind === "start_job" && b.kind === "start_job") return a.jobId === b.jobId;
+  return false;
+}
+
+/** Shown on a job action that waits behind a rejected earlier step of the same job. */
+export const HELD_NOTE = "Waiting for an earlier step of this job";
+
 export class Outbox {
   private items: OutboxItem[] = [];
   private loaded = false;
@@ -134,9 +145,30 @@ export class Outbox {
     for (const f of filesOf(it.action)) await this.deps.deleteFile?.(f.uri).catch(() => {});
   }
 
+  /**
+   * Pending job actions held behind a rejected (failed) earlier action of the
+   * same job (W-1): sending them would only fail in turn (STOP_ORDER,
+   * STOPS_PENDING). A redo of the first rejected step (the stop tapped again,
+   * a retaken POD) is not held. They go once the driver retries the rejected
+   * action successfully, redoes it, or deletes it (then the server decides).
+   */
+  private heldByFailure(): Set<string> {
+    const firstFailed = new Map<number, OutboxAction>();
+    const held = new Set<string>();
+    for (const it of this.items) {
+      const job = jobOf(it.action);
+      if (job === null) continue;
+      const blocker = firstFailed.get(job);
+      if (it.state === "failed") { if (!blocker) firstFailed.set(job, it.action); continue; }
+      if (blocker && !sameStep(blocker, it.action)) held.add(it.id);
+    }
+    return held;
+  }
+
   /** Earliest time a waiting item may be retried (for scheduling), or null. */
   nextRetryAt(): number | null {
-    const waiting = this.items.filter((i) => i.state === "pending").map((i) => i.nextAttemptAt);
+    const held = this.heldByFailure(); // these wait for the driver, not for a timer
+    const waiting = this.items.filter((i) => i.state === "pending" && !held.has(i.id)).map((i) => i.nextAttemptAt);
     return waiting.length ? Math.min(...waiting) : null;
   }
 
@@ -155,6 +187,12 @@ export class Outbox {
     for (const item of [...this.items]) {
       if (item.state !== "pending") continue;
       const job = jobOf(item.action);
+      // Re-evaluated per item: an action rejected earlier in this run holds the rest of its job.
+      if (job !== null && this.heldByFailure().has(item.id)) {
+        if (item.lastError !== HELD_NOTE) { item.lastError = HELD_NOTE; await this.save(); }
+        summary.waiting++;
+        continue;
+      }
       if (item.nextAttemptAt > this.now() || (job !== null && heldJobs.has(job))) {
         if (job !== null) heldJobs.add(job);
         summary.waiting++;
@@ -162,10 +200,12 @@ export class Outbox {
       }
       const err = await this.send(item);
       if (!err) {
-        this.items = this.items.filter((i) => i.id !== item.id);
+        // A successful redo replaces the rejected attempt of the same step.
+        const superseded = this.items.filter((i) => i.state === "failed" && sameStep(i.action, item.action));
+        this.items = this.items.filter((i) => i.id !== item.id && !superseded.includes(i));
         summary.sent++;
         await this.save();
-        for (const f of filesOf(item.action)) await this.deps.deleteFile?.(f.uri).catch(() => {});
+        for (const f of [item, ...superseded].flatMap((i) => filesOf(i.action))) await this.deps.deleteFile?.(f.uri).catch(() => {});
         continue;
       }
       item.attempts++;

@@ -81,8 +81,13 @@ const cases: [string, () => Promise<void>][] = [
   ["STOP_ORDER and STOPS_PENDING are final: shown to the driver, not retried", async () => {
     const { box } = setup((a) => (a.kind === "mark_stop" ? { code: "MV409", message: "STOP_ORDER" } : { code: "MV409", message: "STOPS_PENDING" }));
     await box.enqueue(stop(1, 2, "arrived")); await box.enqueue(complete(1));
-    assert.deepEqual(await box.process(), { sent: 0, failed: 2, waiting: 0, offline: false });
-    assert.deepEqual(box.list().map((i) => i.lastError), ["Complete the previous stop first.", "Deliver every stop before completing the job."]);
+    // W-1: the completion waits behind the rejected stop instead of failing in turn.
+    assert.deepEqual(await box.process(), { sent: 0, failed: 1, waiting: 1, offline: false });
+    assert.deepEqual(box.list().map((i) => i.lastError), ["Complete the previous stop first.", "Waiting for an earlier step of this job"]);
+    const { box: only } = setup(() => ({ code: "MV409", message: "STOPS_PENDING" }));
+    await only.enqueue(complete(2));
+    assert.deepEqual(await only.process(), { sent: 0, failed: 1, waiting: 0, offline: false });
+    assert.equal(only.list()[0].lastError, "Deliver every stop before completing the job.");
   }],
 ];
 
