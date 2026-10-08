@@ -7,6 +7,7 @@ const MESSAGES: Record<string, string> = {
   NOT_A_DRIVER: "This account is not an active driver account. Contact your office.",
   JOB_NOT_FOUND: "This job is no longer assigned to you.",
   JOB_CLOSED: "This job is already closed.",
+  ANOTHER_JOB_IN_PROGRESS: "Finish your current job before starting another.",
   STOP_NOT_FOUND: "This stop no longer exists on the job.",
   INVALID_STATUS: "That action is not possible for this stop.",
   STOP_ORDER: "Complete the previous stop first.",
