@@ -1,0 +1,39 @@
+# Type check and offline unit tests on every pull request and on main.
+# No secrets, no backend, no build: read-only checks of the code only.
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: tsc + unit tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Check out
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Tools
+        run: node --version && npm --version
+
+      - name: Install (lockfile only)
+        run: npm ci --no-audit --no-fund
+
+      - name: Type check
+        run: npm run check
+
+      - name: Unit tests
+        run: npm run test:unit

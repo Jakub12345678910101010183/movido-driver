@@ -14,6 +14,7 @@ import type { GpsPoint } from "../core/types.ts";
 import { api } from "../lib/supabase";
 import { colors } from "../theme";
 import { gpsQueue } from "./sync";
+import { t } from "../i18n/index.ts";
 
 export const LOCATION_TASK = "movido-driver-location";
 
@@ -74,7 +75,7 @@ export async function startTracking(settings: { intervalSeconds: number; distanc
     showsBackgroundLocationIndicator: true,
     foregroundService: {
       notificationTitle: "MOViDO Driver",
-      notificationBody: "Sharing your location with the office while your job is in progress.",
+      notificationBody: t("notify.locationBody"),
       notificationColor: colors.primary,
       killServiceOnDestroy: false,
     },

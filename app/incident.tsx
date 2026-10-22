@@ -13,21 +13,23 @@ import { Banner, Button, Card, Field, Screen } from "../src/ui";
 import { BackBar } from "../src/ui/BackBar";
 import { PhotoField } from "../src/ui/PhotoField";
 import { colors, fonts, radius, space, TOUCH, type } from "../src/theme";
+import { useT } from "../src/i18n/react";
 
-const TYPES: { value: IncidentType; label: string; serious?: boolean }[] = [
-  { value: "accident", label: "Accident", serious: true },
-  { value: "vehicle_damage", label: "Vehicle damage" },
-  { value: "breakdown", label: "Breakdown", serious: true },
-  { value: "traffic_delay", label: "Traffic delay" },
-  { value: "customer_issue", label: "Customer issue" },
-  { value: "delivery_issue", label: "Delivery issue" },
-  { value: "road_closure", label: "Road closure" },
-  { value: "load_damage", label: "Load damage" },
-  { value: "theft", label: "Theft", serious: true },
-  { value: "other", label: "Other" },
+const TYPES: { value: IncidentType; serious?: boolean }[] = [
+  { value: "accident", serious: true },
+  { value: "vehicle_damage" },
+  { value: "breakdown", serious: true },
+  { value: "traffic_delay" },
+  { value: "customer_issue" },
+  { value: "delivery_issue" },
+  { value: "road_closure" },
+  { value: "load_damage" },
+  { value: "theft", serious: true },
+  { value: "other" },
 ];
 
 export default function Incident() {
+  const t = useT();
   const { jobId } = useLocalSearchParams<{ jobId?: string }>();
   const router = useRouter();
   const { profile, act, online, jobs } = useApp();
@@ -37,24 +39,24 @@ export default function Incident() {
   const [photos, setPhotos] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
-  const serious = TYPES.find((t) => t.value === kind)?.serious;
+  const serious = TYPES.find((x) => x.value === kind)?.serious;
 
   if (done) {
     return (
       <Screen>
         <View style={{ alignItems: "center", gap: space.lg, paddingTop: space.xxl * 2 }}>
           <CheckCircle2 size={72} color={colors.success} />
-          <Text style={[type.display, { textAlign: "center" }]}>Issue reported</Text>
-          <Text style={[type.body, { textAlign: "center", color: colors.mutedForeground }]}>{online ? "The office has been sent your report." : "Saved offline — it will sync automatically."}</Text>
+          <Text style={[type.display, { textAlign: "center" }]}>{t("incident.reported")}</Text>
+          <Text style={[type.body, { textAlign: "center", color: colors.mutedForeground }]}>{online ? t("incident.sent") : t("common.savedOffline")}</Text>
         </View>
-        <Button label="Done" size="xl" onPress={() => router.back()} />
+        <Button label={t("common.done")} size="xl" onPress={() => router.back()} />
       </Screen>
     );
   }
 
   const submit = async () => {
-    if (!kind) { Alert.alert("Choose the type", "What kind of issue is it?"); return; }
-    if (!text.trim()) { Alert.alert("Describe what happened", "A short description helps the office act quickly."); return; }
+    if (!kind) { Alert.alert(t("incident.chooseTitle"), t("incident.chooseBody")); return; }
+    if (!text.trim()) { Alert.alert(t("incident.describeTitle"), t("incident.describeBody")); return; }
     if (!profile) return;
     setBusy(true);
     const requestId = newId();
@@ -69,30 +71,30 @@ export default function Incident() {
   };
 
   return (
-    <Screen footer={<Button label="Send report" size="xl" variant={serious ? "danger" : "primary"} busy={busy} icon={<AlertTriangle size={22} color={serious ? "#fff" : colors.primaryForeground} />} onPress={() => void submit()} />}>
-      <BackBar onBack={() => router.back()} title="Report issue" />
-      {job ? <Text style={type.small}>Linked to job {job.reference} · {job.customer}</Text> : null}
+    <Screen footer={<Button label={t("incident.send")} size="xl" variant={serious ? "danger" : "primary"} busy={busy} icon={<AlertTriangle size={22} color={serious ? "#fff" : colors.primaryForeground} />} onPress={() => void submit()} />}>
+      <BackBar onBack={() => router.back()} title={t("common.reportIssue")} />
+      {job ? <Text style={type.small}>{t("incident.linked", { ref: job.reference, customer: job.customer })}</Text> : null}
       {serious ? (
-        <Banner tone="danger" title="If anyone is hurt or in danger, call 999 first." body="Make the scene safe, then report here so the office knows." />
+        <Banner tone="danger" title={t("incident.call999Title")} body={t("incident.call999Body")} />
       ) : null}
-      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: space.sm }} accessibilityRole="radiogroup" accessibilityLabel="Issue type">
-        {TYPES.map((t) => {
-          const on = kind === t.value;
-          const c = t.serious ? colors.destructive : colors.primary;
+      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: space.sm }} accessibilityRole="radiogroup" accessibilityLabel={t("incident.typeA11y")}>
+        {TYPES.map((ty) => {
+          const on = kind === ty.value;
+          const c = ty.serious ? colors.destructive : colors.primary;
           return (
-            <Pressable key={t.value} onPress={() => setKind(t.value)} accessibilityRole="radio" accessibilityState={{ selected: on }} accessibilityLabel={t.label}
+            <Pressable key={ty.value} onPress={() => setKind(ty.value)} accessibilityRole="radio" accessibilityState={{ selected: on }} accessibilityLabel={t(`incident.type.${ty.value}`)}
               style={({ pressed }) => [{ width: "48%", minHeight: TOUCH + 8, borderRadius: radius.lg, borderWidth: 1, borderColor: on ? c : colors.borderStrong,
-                backgroundColor: on ? (t.serious ? colors.destructiveSoft : colors.primarySoft) : colors.card, alignItems: "center", justifyContent: "center", flexDirection: "row", gap: 8, padding: 8 }, pressed && { opacity: 0.8 }]}>
-              {t.serious ? <AlertOctagon size={18} color={colors.destructive} /> : null}
-              <Text style={{ fontFamily: fonts.semibold, fontSize: 16, color: on ? c : colors.foreground }}>{t.label}</Text>
+                backgroundColor: on ? (ty.serious ? colors.destructiveSoft : colors.primarySoft) : colors.card, alignItems: "center", justifyContent: "center", flexDirection: "row", gap: 8, padding: 8 }, pressed && { opacity: 0.8 }]}>
+              {ty.serious ? <AlertOctagon size={18} color={colors.destructive} /> : null}
+              <Text style={{ fontFamily: fonts.semibold, fontSize: 16, color: on ? c : colors.foreground }}>{t(`incident.type.${ty.value}`)}</Text>
             </Pressable>
           );
         })}
       </View>
       <Card>
-        <Field label="What happened?" value={text} onChangeText={setText} multiline placeholder="Where, what, anyone involved, is the load OK?" maxLength={4000} />
-        <PhotoField label="Photos" uris={photos} onChange={setPhotos} max={3} />
-        <Text style={type.small}>Time and location are recorded automatically.</Text>
+        <Field label={t("incident.what")} value={text} onChangeText={setText} multiline placeholder={t("incident.whatPh")} maxLength={4000} />
+        <PhotoField label={t("incident.photos")} uris={photos} onChange={setPhotos} max={3} />
+        <Text style={type.small}>{t("common.timeLocationAuto")}</Text>
       </Card>
     </Screen>
   );

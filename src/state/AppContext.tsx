@@ -18,6 +18,7 @@ import { isTracking, permissionState, requestPermissions, startTracking, stopTra
 import { registerForPush, unregisterPush, type PushStatus } from "../services/notifications";
 import { gpsQueue, newId, outbox, syncNow } from "../services/sync";
 import type { GpsState } from "../core/gpsQueue.ts";
+import { t } from "../i18n/index.ts";
 
 export type AuthState = "loading" | "signed_out" | "not_driver" | "disabled" | "ready";
 export type SyncState = "online" | "offline" | "syncing" | "error";
@@ -229,10 +230,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setAuthMessage(null);
     const { data, error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
     if (error) {
-      if (/invalid login credentials/i.test(error.message)) return "Email or password is not correct.";
-      if (/email not confirmed/i.test(error.message)) return "Activate your account from the invitation email first.";
-      if (/network|fetch/i.test(error.message)) return "No connection. Sign in needs internet the first time.";
-      return "Could not sign in. Please try again.";
+      if (/invalid login credentials/i.test(error.message)) return t("login.wrongCredentials");
+      if (/email not confirmed/i.test(error.message)) return t("login.notConfirmed");
+      if (/network|fetch/i.test(error.message)) return t("login.noConnection");
+      return t("login.failed");
     }
     await loadDriver(data.session);
     return null;

@@ -9,7 +9,9 @@ import {
   type StyleProp, type TextInputProps, type ViewStyle, RefreshControl, KeyboardAvoidingView, Platform,
 } from "react-native";
 import { SafeAreaView, type Edge } from "react-native-safe-area-context";
-import { colors, fonts, radius, space, statusTone, STATUS_LABEL, TOUCH, type } from "../theme";
+import { colors, fonts, radius, space, statusTone, TOUCH, type } from "../theme";
+import { t, type Key } from "../i18n/index.ts";
+import { en } from "../i18n/en.ts";
 
 export { colors };
 
@@ -37,7 +39,7 @@ export function Screen({ children, scroll = true, edges = ["top"], refreshing, o
 
 export function Logo({ subtitle }: { subtitle?: string }) {
   return (
-    <View style={s.logoRow} accessible accessibilityRole="header" accessibilityLabel={`MOViDO ${subtitle ?? "Driver"}`}>
+    <View style={s.logoRow} accessible accessibilityRole="header" accessibilityLabel={`MOViDO ${subtitle ?? t("common.driver")}`}>
       <View style={s.logoMark}><Truck size={18} color={colors.primary} /></View>
       <Text style={s.logoText}>MOViDO</Text>
       {subtitle ? <Text style={s.logoSub}>{subtitle}</Text> : null}
@@ -92,11 +94,11 @@ export function Button({ label, onPress, variant = "primary", icon, disabled, bu
 }
 
 export function Pill({ status, label, tone }: { status?: string; label?: string; tone?: "neutral" | "primary" | "success" | "warning" | "danger" }) {
-  const t = tone ?? statusTone(status ?? "");
-  const c = { neutral: colors.mutedForeground, primary: colors.primary, success: colors.success, warning: colors.warning, danger: colors.destructive }[t];
-  const text = label ?? STATUS_LABEL[status ?? ""] ?? status ?? "";
+  const tn = tone ?? statusTone(status ?? "");
+  const c = { neutral: colors.mutedForeground, primary: colors.primary, success: colors.success, warning: colors.warning, danger: colors.destructive }[tn];
+  const text = label ?? (status && `status.${status}` in en ? t(`status.${status}` as Key) : status ?? "");
   return (
-    <View style={[s.pill, { borderColor: c }]} accessibilityLabel={`Status: ${text}`}>
+    <View style={[s.pill, { borderColor: c }]} accessibilityLabel={t("common.statusA11y", { text })}>
       <View style={[s.pillDot, { backgroundColor: c }]} />
       <Text style={[s.pillText, { color: c }]}>{text}</Text>
     </View>
@@ -167,10 +169,10 @@ export function Banner({ tone, title, body, action }: { tone: "info" | "warning"
 export function SyncBar({ sync, pending, onPress }: { sync: "online" | "offline" | "syncing" | "error"; pending: number; onPress?: () => void }) {
   if (sync === "online" && !pending) return null;
   const cfg = {
-    offline: { c: colors.warning, icon: <WifiOff size={18} color={colors.warning} />, text: pending ? `Offline — ${pending} saved, will sync automatically` : "Offline — showing last saved work" },
-    syncing: { c: colors.primary, icon: <RefreshCw size={18} color={colors.primary} />, text: pending ? `Syncing ${pending} update${pending === 1 ? "" : "s"}…` : "Syncing…" },
-    error: { c: colors.destructive, icon: <AlertTriangle size={18} color={colors.destructive} />, text: "Sync problem — tap to review" },
-    online: { c: colors.primary, icon: <CloudOff size={18} color={colors.primary} />, text: `${pending} waiting to sync` },
+    offline: { c: colors.warning, icon: <WifiOff size={18} color={colors.warning} />, text: pending ? t("bar.offlinePending", { n: pending }) : t("bar.offline") },
+    syncing: { c: colors.primary, icon: <RefreshCw size={18} color={colors.primary} />, text: pending ? t("bar.syncingN", { n: pending }) : t("bar.syncing") },
+    error: { c: colors.destructive, icon: <AlertTriangle size={18} color={colors.destructive} />, text: t("bar.error") },
+    online: { c: colors.primary, icon: <CloudOff size={18} color={colors.primary} />, text: t("bar.waiting", { n: pending }) },
   }[sync];
   return (
     <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={cfg.text} style={[s.syncBar, { borderColor: cfg.c }]}>
@@ -191,7 +193,7 @@ export function Empty({ icon, title, body, action }: { icon?: React.ReactNode; t
   );
 }
 
-export function Loading({ label = "Loading…" }: { label?: string }) {
+export function Loading({ label = t("common.loading") }: { label?: string }) {
   return (
     <View style={s.empty} accessibilityLabel={label}>
       <ActivityIndicator color={colors.primary} size="large" />

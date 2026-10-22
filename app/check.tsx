@@ -14,24 +14,28 @@ import { Banner, Button, Card, Field, Screen, Segmented } from "../src/ui";
 import { BackBar } from "../src/ui/BackBar";
 import { PhotoField } from "../src/ui/PhotoField";
 import { colors, space, type } from "../src/theme";
+import { t as tr } from "../src/i18n/index.ts";
+import { useT } from "../src/i18n/react";
 
-const ITEMS: { key: CheckKey; label: string; hint: string; critical?: boolean }[] = [
-  { key: "tyres", label: "Tyres & wheels", hint: "Tread, damage, pressure, wheel nuts", critical: true },
-  { key: "lights", label: "Lights & indicators", hint: "Head, tail, brake, indicators, markers", critical: true },
-  { key: "brakes", label: "Brakes", hint: "Service & parking brake, air build-up", critical: true },
-  { key: "mirrors", label: "Mirrors & glass", hint: "Mirrors, windscreen, wipers" },
-  { key: "body", label: "Bodywork & doors", hint: "Panels, doors, load security" },
-  { key: "trailer", label: "Trailer", hint: "Body, curtains, landing legs" },
-  { key: "coupling", label: "Coupling", hint: "Fifth wheel, kingpin, air & electric lines", critical: true },
-  { key: "fluids", label: "Fluids & leaks", hint: "Oil, coolant, AdBlue, fuel leaks" },
-  { key: "safety_equipment", label: "Safety equipment", hint: "Extinguisher, first aid, hi-vis" },
-  { key: "damage", label: "New damage", hint: "Any damage not reported before" },
-  { key: "other", label: "Other", hint: "Anything else" },
+const ITEMS: { key: CheckKey; critical?: boolean }[] = [
+  { key: "tyres", critical: true },
+  { key: "lights", critical: true },
+  { key: "brakes", critical: true },
+  { key: "mirrors" },
+  { key: "body" },
+  { key: "trailer" },
+  { key: "coupling", critical: true },
+  { key: "fluids" },
+  { key: "safety_equipment" },
+  { key: "damage" },
+  { key: "other" },
 ];
+const itemLabel = (k: CheckKey) => tr(`check.item.${k}`);
 
 type Status = "pass" | "fail" | "na" | "";
 
 export default function VehicleCheck() {
+  const t = useT();
   const router = useRouter();
   const { profile, act, online } = useApp();
   const [status, setStatus] = useState<Record<string, Status>>({});
@@ -48,8 +52,8 @@ export default function VehicleCheck() {
 
   if (!profile?.vehicle) {
     return (
-      <Screen><BackBar onBack={() => router.back()} title="Vehicle check" />
-        <Banner tone="warning" title="No vehicle assigned" body="Ask the office to assign your vehicle, then do the check." /></Screen>
+      <Screen><BackBar onBack={() => router.back()} title={t("common.vehicleCheck")} />
+        <Banner tone="warning" title={t("check.noVehicleTitle")} body={t("check.noVehicleBody")} /></Screen>
     );
   }
   if (done) {
@@ -57,20 +61,20 @@ export default function VehicleCheck() {
       <Screen>
         <View style={{ alignItems: "center", gap: space.lg, paddingTop: space.xxl * 2 }}>
           {done.critical ? <ShieldAlert size={72} color={colors.destructive} /> : <ClipboardCheck size={72} color={done.fails ? colors.warning : colors.success} />}
-          <Text style={[type.display, { textAlign: "center" }]}>{done.critical ? "Do not drive" : done.fails ? "Check submitted with defects" : "Vehicle check passed"}</Text>
+          <Text style={[type.display, { textAlign: "center" }]}>{done.critical ? t("check.doNotDrive") : done.fails ? t("check.withDefects") : t("check.passed")}</Text>
           <Text style={[type.body, { textAlign: "center", color: colors.mutedForeground }]}>
-            {done.critical ? "A safety-critical defect was reported. Contact the office before driving this vehicle." : online ? "The office can see this check." : "Saved offline — it will sync automatically."}
+            {done.critical ? t("check.criticalDone") : online ? t("check.officeSees") : t("common.savedOffline")}
           </Text>
         </View>
-        <Button label="Done" size="xl" onPress={() => router.replace("/(tabs)")} />
+        <Button label={t("common.done")} size="xl" onPress={() => router.replace("/(tabs)")} />
       </Screen>
     );
   }
 
   const submit = async () => {
-    if (answered < ITEMS.length) { Alert.alert("Check not finished", `Mark all ${ITEMS.length} items as Pass, Fail or N/A.`); return; }
+    if (answered < ITEMS.length) { Alert.alert(t("check.notFinishedTitle"), t("check.notFinishedBody", { n: ITEMS.length })); return; }
     const missingNote = fails.find((i) => !(notes[i.key] ?? "").trim());
-    if (missingNote) { Alert.alert("Describe the defect", `Add a short note for "${missingNote.label}".`); return; }
+    if (missingNote) { Alert.alert(t("check.describeTitle"), t("check.describeBody", { item: itemLabel(missingNote.key) })); return; }
     const odo = odometer.trim() ? Number(odometer.replace(/[^0-9]/g, "")) : null;
     setBusy(true);
     const requestId = newId();
@@ -86,31 +90,31 @@ export default function VehicleCheck() {
   };
 
   return (
-    <Screen footer={<Button label={`Submit check (${answered}/${ITEMS.length})`} size="xl" busy={busy} variant={critical ? "danger" : "primary"} onPress={() => void submit()} />}>
-      <BackBar onBack={() => router.back()} title="Pre-start check" />
+    <Screen footer={<Button label={t("check.submit", { done: answered, total: ITEMS.length })} size="xl" busy={busy} variant={critical ? "danger" : "primary"} onPress={() => void submit()} />}>
+      <BackBar onBack={() => router.back()} title={t("check.title")} />
       <Card>
         <Text style={type.heading}>{profile.vehicle.vehicle_id}{profile.vehicle.registration ? ` · ${profile.vehicle.registration}` : ""}</Text>
-        <Field label="Odometer (miles)" value={odometer} onChangeText={setOdometer} keyboardType="number-pad" placeholder="e.g. 250100" />
-        <Button label="All items pass" variant="ghost" size="md" onPress={() => setStatus(Object.fromEntries(ITEMS.map((i) => [i.key, status[i.key] || "pass"])))}
-          accessibilityHint="Marks every unanswered item as pass" />
+        <Field label={t("check.odometer")} value={odometer} onChangeText={setOdometer} keyboardType="number-pad" placeholder={t("check.odometerPh")} />
+        <Button label={t("check.allPass")} variant="ghost" size="md" onPress={() => setStatus(Object.fromEntries(ITEMS.map((i) => [i.key, status[i.key] || "pass"])))}
+          accessibilityHint={t("check.allPassHint")} />
       </Card>
-      {critical ? <Banner tone="danger" title="Safety-critical defect" body="Brakes, tyres, lights or coupling failed. Do not drive until the office confirms it is safe." /> : null}
+      {critical ? <Banner tone="danger" title={t("check.criticalTitle")} body={t("check.criticalBody")} /> : null}
       {ITEMS.map((i) => (
         <Card key={i.key} tone={status[i.key] === "fail" ? (i.critical ? "danger" : "warning") : undefined}>
           <View style={{ gap: 2 }}>
-            <Text style={type.bodyStrong}>{i.label}{i.critical ? <Text style={{ color: colors.destructive }}>  · critical</Text> : null}</Text>
-            <Text style={type.small}>{i.hint}</Text>
+            <Text style={type.bodyStrong}>{itemLabel(i.key)}{i.critical ? <Text style={{ color: colors.destructive }}>{t("check.criticalTag")}</Text> : null}</Text>
+            <Text style={type.small}>{t(`check.hint.${i.key}`)}</Text>
           </View>
-          <Segmented label={i.label} value={(status[i.key] || "") as Status} onChange={(v) => setStatus((p) => ({ ...p, [i.key]: v }))}
-            options={[{ value: "pass", label: "Pass", tone: "success" }, { value: "fail", label: "Fail", tone: "danger" }, { value: "na", label: "N/A", tone: "neutral" }]} />
+          <Segmented label={itemLabel(i.key)} value={(status[i.key] || "") as Status} onChange={(v) => setStatus((p) => ({ ...p, [i.key]: v }))}
+            options={[{ value: "pass", label: t("check.pass"), tone: "success" }, { value: "fail", label: t("check.fail"), tone: "danger" }, { value: "na", label: t("check.na"), tone: "neutral" }]} />
           {status[i.key] === "fail" ? (
-            <Field label="What is wrong?" value={notes[i.key] ?? ""} onChangeText={(t) => setNotes((p) => ({ ...p, [i.key]: t }))} placeholder="Describe the defect" multiline maxLength={500} />
+            <Field label={t("check.whatWrong")} value={notes[i.key] ?? ""} onChangeText={(v) => setNotes((p) => ({ ...p, [i.key]: v }))} placeholder={t("check.defectPh")} multiline maxLength={500} />
           ) : null}
         </Card>
       ))}
       <Card>
-        <PhotoField label="Defect photos" uris={photos} onChange={setPhotos} max={4} />
-        <Field label="Other notes (optional)" value={general} onChangeText={setGeneral} multiline maxLength={2000} />
+        <PhotoField label={t("check.photos")} uris={photos} onChange={setPhotos} max={4} />
+        <Field label={t("check.otherNotes")} value={general} onChangeText={setGeneral} multiline maxLength={2000} />
       </Card>
     </Screen>
   );

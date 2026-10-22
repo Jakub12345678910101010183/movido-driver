@@ -1,6 +1,7 @@
 // Stops as the backend stores them (jobs.stops jsonb), read defensively: old
 // jobs may have no stops, a single delivery address, or partial objects.
 import type { Job, Stop, StopStatus } from "./types.ts";
+import { t } from "../i18n/index.ts";
 
 export interface RouteLeg {
   kind: "collection" | "stop" | "delivery";
@@ -26,7 +27,7 @@ export function parseStops(raw: unknown): Stop[] {
     const o = (s ?? {}) as Record<string, unknown>;
     const status = o.status === "arrived" || o.status === "completed" ? o.status : "pending";
     return {
-      address: str(o.address) ?? str(o.name) ?? "Stop",
+      address: str(o.address) ?? str(o.name) ?? t("stop.default"),
       lat: num(o.lat),
       lng: num(o.lng),
       status,
@@ -48,12 +49,12 @@ export function legsOf(job: Job): RouteLeg[] {
   const stops = parseStops(job.stops);
   const legs: RouteLeg[] = [];
   if (job.pickup_address) {
-    legs.push({ kind: "collection", index: null, label: "Collection", address: job.pickup_address,
+    legs.push({ kind: "collection", index: null, label: t("stop.collection"), address: job.pickup_address,
       lat: job.pickup_lat, lng: job.pickup_lng, status: stops.length ? "completed" : job.status === "pending" || job.status === "assigned" ? "pending" : "completed" });
   }
-  stops.forEach((s, i) => legs.push({ kind: "stop", index: i, label: `Stop ${i + 1}`, ...s }));
+  stops.forEach((s, i) => legs.push({ kind: "stop", index: i, label: t("stop.n", { n: i + 1 }), ...s }));
   if (!stops.length && job.delivery_address) {
-    legs.push({ kind: "delivery", index: null, label: "Delivery", address: job.delivery_address,
+    legs.push({ kind: "delivery", index: null, label: t("stop.delivery"), address: job.delivery_address,
       lat: job.delivery_lat, lng: job.delivery_lng, status: job.status === "completed" ? "completed" : "pending" });
   }
   // With stops, the collection leg is informational only; mark it done once
@@ -80,11 +81,11 @@ export function stopCounts(job: Job): { total: number; done: number } {
 export function nextDestination(job: Job): { label: string; address: string; lat: number | null; lng: number | null } | null {
   const i = nextStopIndex(job);
   const stops = parseStops(job.stops);
-  if (i !== null) return { label: `Stop ${i + 1}`, address: stops[i].address, lat: stops[i].lat, lng: stops[i].lng };
+  if (i !== null) return { label: t("stop.n", { n: i + 1 }), address: stops[i].address, lat: stops[i].lat, lng: stops[i].lng };
   if (job.status === "pending" || job.status === "assigned") {
-    if (job.pickup_address) return { label: "Collection", address: job.pickup_address, lat: job.pickup_lat, lng: job.pickup_lng };
+    if (job.pickup_address) return { label: t("stop.collection"), address: job.pickup_address, lat: job.pickup_lat, lng: job.pickup_lng };
   }
-  if (job.delivery_address) return { label: "Delivery", address: job.delivery_address, lat: job.delivery_lat, lng: job.delivery_lng };
+  if (job.delivery_address) return { label: t("stop.delivery"), address: job.delivery_address, lat: job.delivery_lat, lng: job.delivery_lng };
   return null;
 }
 
