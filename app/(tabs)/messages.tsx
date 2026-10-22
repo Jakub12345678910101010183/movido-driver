@@ -11,10 +11,12 @@ import { formatClock } from "../../src/services/navigation";
 import { useApp } from "../../src/state/AppContext";
 import { Empty, SyncBar } from "../../src/ui";
 import { colors, fonts, radius, space, TOUCH, type } from "../../src/theme";
+import { useT } from "../../src/i18n/react";
 
 type Row = Message & { pending?: boolean };
 
 export default function Messages() {
+  const t = useT();
   const { messages, session, profile, act, refreshMessages, outboxItems, sync } = useApp();
   const [text, setText] = useState("");
   const list = useRef<FlatList<Row>>(null);
@@ -49,7 +51,7 @@ export default function Messages() {
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={["top"]}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined} keyboardVerticalOffset={Platform.OS === "ios" ? 60 : 0}>
         <View style={{ padding: space.lg, paddingBottom: space.sm, gap: space.sm }}>
-          <Text style={type.title}>Office</Text>
+          <Text style={type.title}>{t("msg.title")}</Text>
           <SyncBar sync={sync} pending={outboxItems.filter((i) => i.state === "pending").length} />
         </View>
         <FlatList
@@ -58,35 +60,35 @@ export default function Messages() {
           keyExtractor={(m, i) => `${m.id}-${m.client_request_id ?? i}`}
           contentContainerStyle={{ padding: space.lg, gap: space.sm, flexGrow: 1 }}
           onContentSizeChange={() => list.current?.scrollToEnd({ animated: false })}
-          ListEmptyComponent={<Empty title="No messages yet" body="Messages from your office appear here. You can message the office any time." />}
+          ListEmptyComponent={<Empty title={t("msg.emptyTitle")} body={t("msg.emptyBody")} />}
           renderItem={({ item: m }) => {
             const mine = m.sender_id === uid;
             const broadcast = m.recipient_id === "broadcast";
             const urgent = m.channel === "alert";
             return (
               <View style={{ alignItems: mine ? "flex-end" : "flex-start" }} accessible
-                accessibilityLabel={`${mine ? "You" : broadcast ? "Office broadcast" : "Office"}${urgent ? ", urgent" : ""}: ${m.content}. ${formatClock(m.created_at)}${m.pending ? ", sending" : ""}`}>
+                accessibilityLabel={`${mine ? t("msg.you") : broadcast ? t("msg.officeBroadcast") : t("msg.office")}${urgent ? t("msg.urgentA11y") : ""}: ${m.content}. ${formatClock(m.created_at)}${m.pending ? t("msg.sendingA11y") : ""}`}>
                 <View style={{ maxWidth: "85%", borderRadius: radius.xl, padding: space.md, gap: 4, borderWidth: 1,
                   backgroundColor: mine ? colors.primarySoft : urgent ? colors.destructiveSoft : colors.card,
                   borderColor: mine ? colors.primaryBorder : urgent ? colors.destructive : colors.border }}>
                   {!mine ? (
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
                       {broadcast ? <Megaphone size={14} color={urgent ? colors.destructive : colors.warning} /> : null}
-                      <Text style={[type.label, urgent && { color: colors.destructive }]}>{urgent ? "Urgent · " : ""}{broadcast ? "Broadcast" : "Office"}</Text>
+                      <Text style={[type.label, urgent && { color: colors.destructive }]}>{urgent ? t("msg.urgentPrefix") : ""}{broadcast ? t("msg.broadcast") : t("msg.office")}</Text>
                     </View>
                   ) : null}
                   <Text style={type.body}>{m.content}</Text>
-                  <Text style={[type.small, { fontSize: 12 }]}>{m.pending ? "Sending…" : formatClock(m.created_at)}{mine && !m.pending ? " · sent" : ""}</Text>
+                  <Text style={[type.small, { fontSize: 12 }]}>{m.pending ? t("msg.sending") : formatClock(m.created_at)}{mine && !m.pending ? t("msg.sent") : ""}</Text>
                 </View>
               </View>
             );
           }}
         />
         <View style={{ flexDirection: "row", gap: space.sm, padding: space.md, borderTopWidth: 1, borderTopColor: colors.border, backgroundColor: colors.card }}>
-          <TextInput value={text} onChangeText={setText} placeholder="Message the office…" placeholderTextColor={colors.mutedForeground}
-            accessibilityLabel="Message to the office" multiline maxLength={2000}
+          <TextInput value={text} onChangeText={setText} placeholder={t("msg.placeholder")} placeholderTextColor={colors.mutedForeground}
+            accessibilityLabel={t("msg.inputA11y")} multiline maxLength={2000}
             style={{ flex: 1, minHeight: TOUCH, maxHeight: 120, borderWidth: 1, borderColor: colors.borderStrong, borderRadius: radius.lg, paddingHorizontal: 14, paddingTop: 14, color: colors.foreground, fontFamily: fonts.regular, fontSize: 17, backgroundColor: colors.input }} />
-          <Pressable onPress={() => void send()} disabled={!text.trim()} accessibilityRole="button" accessibilityLabel="Send message"
+          <Pressable onPress={() => void send()} disabled={!text.trim()} accessibilityRole="button" accessibilityLabel={t("msg.sendA11y")}
             style={({ pressed }) => [{ width: TOUCH + 4, minHeight: TOUCH, borderRadius: radius.lg, backgroundColor: colors.primary, alignItems: "center", justifyContent: "center" }, !text.trim() && { opacity: 0.4 }, pressed && { opacity: 0.8 }]}>
             <Send size={22} color={colors.primaryForeground} />
           </Pressable>

@@ -1,48 +1,50 @@
 // Backend errors → a driver-readable message, and whether trying again later
 // can succeed. Codes are the MVxxx errcodes the RPCs raise.
 
+import { t } from "../i18n/index.ts";
+
 export interface BackendError { code?: string; message?: string; status?: number }
 
-const MESSAGES: Record<string, string> = {
-  NOT_A_DRIVER: "This account is not an active driver account. Contact your office.",
-  JOB_NOT_FOUND: "This job is no longer assigned to you.",
-  JOB_CLOSED: "This job is already closed.",
-  ANOTHER_JOB_IN_PROGRESS: "Finish your current job before starting another.",
-  STOP_NOT_FOUND: "This stop no longer exists on the job.",
-  INVALID_STATUS: "That action is not possible for this stop.",
-  STOP_ORDER: "Complete the previous stop first.",
-  STOP_ALREADY_COMPLETED: "This stop is already delivered.",
-  STOPS_PENDING: "Deliver every stop before completing the job.",
-  LOCATION_REQUIRED: "Your location is needed to confirm this stop. Turn on location and try again at the stop.",
-  LOCATION_INACCURATE: "Your location is not precise enough yet. Wait a moment in the open and try again.",
-  NOT_AT_STOP: "You are not at this stop yet. Try again when you arrive.",
-  STOP_NOT_LOCATED: "This stop has no map position. Ask the office to correct its address.",
-  POD_REQUIRED: "Add a delivery photo or the recipient's signature.",
-  PHOTO_NOT_UPLOADED: "The delivery photo has not finished uploading.",
-  INVALID_PHOTO_PATH: "The delivery photo could not be linked to this job.",
-  INVALID_SIGNATURE: "The signature could not be saved. Please sign again.",
-  NO_VEHICLE: "No vehicle is assigned to you. Ask the office to assign one.",
-  VEHICLE_NOT_FOUND: "That vehicle is not in your company.",
-  INVALID_ITEM: "The check contains an unknown item.",
-  INVALID_TYPE: "Choose what kind of issue this is.",
-  DESCRIPTION_REQUIRED: "Describe what happened.",
-  INVALID_FUEL_TYPE: "Choose a fuel type.",
-  INVALID_LITRES: "Enter the litres (more than 0).",
-  INVALID_PRICE: "The price looks wrong. Check the receipt.",
-  INVALID_MILEAGE: "The mileage looks wrong.",
-  INVALID_PHOTOS: "One of the photos could not be attached.",
-  EMPTY_PHOTO: "Photo is empty — please retake it.",
-  PHOTO_MISSING: "Photo is no longer on this phone — please retake it.",
-  INVALID_RECEIPT: "The receipt photo could not be attached.",
-  INVALID_POSITION: "Your location could not be read.",
-};
+const CODES = [
+  "NOT_A_DRIVER",
+  "JOB_NOT_FOUND",
+  "JOB_CLOSED",
+  "ANOTHER_JOB_IN_PROGRESS",
+  "STOP_NOT_FOUND",
+  "INVALID_STATUS",
+  "STOP_ORDER",
+  "STOP_ALREADY_COMPLETED",
+  "STOPS_PENDING",
+  "LOCATION_REQUIRED",
+  "LOCATION_INACCURATE",
+  "NOT_AT_STOP",
+  "STOP_NOT_LOCATED",
+  "POD_REQUIRED",
+  "PHOTO_NOT_UPLOADED",
+  "INVALID_PHOTO_PATH",
+  "INVALID_SIGNATURE",
+  "NO_VEHICLE",
+  "VEHICLE_NOT_FOUND",
+  "INVALID_ITEM",
+  "INVALID_TYPE",
+  "DESCRIPTION_REQUIRED",
+  "INVALID_FUEL_TYPE",
+  "INVALID_LITRES",
+  "INVALID_PRICE",
+  "INVALID_MILEAGE",
+  "INVALID_PHOTOS",
+  "EMPTY_PHOTO",
+  "PHOTO_MISSING",
+  "INVALID_RECEIPT",
+  "INVALID_POSITION",
+] as const;
 
 export function describeError(err: BackendError | null | undefined): string {
-  if (!err) return "Something went wrong.";
-  const key = Object.keys(MESSAGES).find((k) => err.message?.includes(k));
-  if (key) return MESSAGES[key];
-  if (isNetworkError(err)) return "No connection. It will be sent when you are back online.";
-  return "Something went wrong. Please try again.";
+  if (!err) return t("err.generic");
+  const code = CODES.find((k) => err.message?.includes(k));
+  if (code) return t(`err.${code}`);
+  if (isNetworkError(err)) return t("err.network");
+  return t("err.tryAgain");
 }
 
 export function isNetworkError(err: BackendError | null | undefined): boolean {

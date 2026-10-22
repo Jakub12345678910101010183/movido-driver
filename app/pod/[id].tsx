@@ -14,11 +14,13 @@ import { Banner, Button, Card, Field, Screen } from "../../src/ui";
 import { BackBar } from "../../src/ui/BackBar";
 import { PhotoField } from "../../src/ui/PhotoField";
 import { colors, radius, space, type } from "../../src/theme";
+import { useT } from "../../src/i18n/react";
 
 const PAD_STYLE = `.m-signature-pad{box-shadow:none;border:none;margin:0;width:100%;height:100%}
 .m-signature-pad--body{border:none}.m-signature-pad--footer{display:none}body,html{background:#ffffff;margin:0;height:100%}`;
 
 export default function Pod() {
+  const t = useT();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { jobs, act, online } = useApp();
@@ -32,25 +34,25 @@ export default function Pod() {
   const [saved, setSaved] = useState(false);
   const pad = useRef<SignatureViewRef>(null);
 
-  if (!job) return <Screen><BackBar onBack={() => router.back()} /><Banner tone="warning" title="Job not found" /></Screen>;
+  if (!job) return <Screen><BackBar onBack={() => router.back()} /><Banner tone="warning" title={t("common.jobNotFound")} /></Screen>;
   if (saved || job.status === "completed") {
     return (
       <Screen>
         <View style={{ alignItems: "center", gap: space.lg, paddingTop: space.xxl * 2 }}>
           <CheckCircle2 size={72} color={colors.success} />
-          <Text style={[type.display, { textAlign: "center" }]}>Delivery completed</Text>
+          <Text style={[type.display, { textAlign: "center" }]}>{t("pod.completed")}</Text>
           <Text style={[type.body, { textAlign: "center", color: colors.mutedForeground }]}>
-            {online ? "Proof of delivery is being sent to the office." : "Saved offline — it will sync automatically when you have signal."}
+            {online ? t("pod.sending") : t("pod.savedOffline")}
           </Text>
         </View>
-        <Button label="Back to my jobs" size="xl" onPress={() => router.replace("/(tabs)")} />
+        <Button label={t("pod.backToJobs")} size="xl" onPress={() => router.replace("/(tabs)")} />
       </Screen>
     );
   }
 
   const submit = async () => {
-    if (!photos.length && !signature) { Alert.alert("Proof of delivery needed", "Take a photo of the delivered goods or get the recipient's signature."); return; }
-    if (signature && !recipient.trim()) { Alert.alert("Recipient name", "Enter the name of the person who signed."); return; }
+    if (!photos.length && !signature) { Alert.alert(t("pod.neededTitle"), t("pod.neededBody")); return; }
+    if (signature && !recipient.trim()) { Alert.alert(t("pod.recipientTitle"), t("pod.recipientBody")); return; }
     setBusy(true);
     const requestId = newId();
     const pos = await currentPosition();
@@ -71,43 +73,43 @@ export default function Pod() {
 
   return (
     <Screen
-      footer={<Button label="Confirm delivery" size="xl" variant="success" busy={busy} icon={<CheckCircle2 size={22} color={colors.primaryForeground} />} onPress={() => void submit()} />}
+      footer={<Button label={t("pod.confirm")} size="xl" variant="success" busy={busy} icon={<CheckCircle2 size={22} color={colors.primaryForeground} />} onPress={() => void submit()} />}
     >
-      <BackBar onBack={() => router.back()} title={`POD · ${job.reference}`} />
+      <BackBar onBack={() => router.back()} title={t("pod.title", { ref: job.reference })} />
       <Text style={type.small}>{job.customer}{job.delivery_address ? ` · ${job.delivery_address}` : ""}</Text>
 
       <Card>
-        <PhotoField label="Delivery photo" uris={photos} onChange={setPhotos} max={1} />
+        <PhotoField label={t("pod.photo")} uris={photos} onChange={setPhotos} max={1} />
       </Card>
 
       <Card>
-        <Text style={type.label}>Recipient signature</Text>
+        <Text style={type.label}>{t("pod.signature")}</Text>
         {signature && !signing ? (
           <View style={{ gap: space.sm }}>
-            <Banner tone="success" title="Signature captured" />
-            <Button label="Sign again" variant="secondary" size="md" icon={<PenLine size={18} color={colors.foreground} />} onPress={() => { setSignature(null); setSigning(true); }} />
+            <Banner tone="success" title={t("pod.sigCaptured")} />
+            <Button label={t("pod.signAgain")} variant="secondary" size="md" icon={<PenLine size={18} color={colors.foreground} />} onPress={() => { setSignature(null); setSigning(true); }} />
           </View>
         ) : signing ? (
           <View style={{ gap: space.sm }}>
             <View style={{ height: 260, borderRadius: radius.lg, overflow: "hidden", borderWidth: 1, borderColor: colors.primaryBorder }}
-              accessibilityLabel="Signature pad. The recipient signs here with a finger.">
+              accessibilityLabel={t("pod.padA11y")}>
               <SignatureScreen ref={pad} webStyle={PAD_STYLE} penColor="#000000" backgroundColor="#ffffff" autoClear={false}
-                imageType="image/png" onOK={(sig) => { setSignature(sig); setSigning(false); }} onEmpty={() => Alert.alert("No signature", "Ask the recipient to sign in the box.")} />
+                imageType="image/png" onOK={(sig) => { setSignature(sig); setSigning(false); }} onEmpty={() => Alert.alert(t("pod.noSigTitle"), t("pod.noSigBody"))} />
             </View>
             <View style={{ flexDirection: "row", gap: space.sm }}>
-              <Button style={{ flex: 1 }} label="Clear" variant="ghost" icon={<Eraser size={18} color={colors.foreground} />} onPress={() => pad.current?.clearSignature()} />
-              <Button style={{ flex: 2 }} label="Confirm signature" onPress={() => pad.current?.readSignature()} />
+              <Button style={{ flex: 1 }} label={t("pod.clear")} variant="ghost" icon={<Eraser size={18} color={colors.foreground} />} onPress={() => pad.current?.clearSignature()} />
+              <Button style={{ flex: 2 }} label={t("pod.confirmSig")} onPress={() => pad.current?.readSignature()} />
             </View>
           </View>
         ) : (
-          <Button label="Get signature" variant="secondary" icon={<PenLine size={20} color={colors.foreground} />} onPress={() => setSigning(true)} />
+          <Button label={t("pod.getSig")} variant="secondary" icon={<PenLine size={20} color={colors.foreground} />} onPress={() => setSigning(true)} />
         )}
-        <Field label="Recipient name" value={recipient} onChangeText={setRecipient} placeholder="Name of the person receiving" autoCapitalize="words" />
+        <Field label={t("pod.recipientTitle")} value={recipient} onChangeText={setRecipient} placeholder={t("pod.recipientPh")} autoCapitalize="words" />
       </Card>
 
       <Card>
-        <Field label="Notes (optional)" value={notes} onChangeText={setNotes} placeholder="e.g. left at goods-in, 2 pallets" multiline maxLength={2000} />
-        <Text style={type.small}>Time and location are recorded automatically.</Text>
+        <Field label={t("pod.notes")} value={notes} onChangeText={setNotes} placeholder={t("pod.notesPh")} multiline maxLength={2000} />
+        <Text style={type.small}>{t("common.timeLocationAuto")}</Text>
       </Card>
     </Screen>
   );

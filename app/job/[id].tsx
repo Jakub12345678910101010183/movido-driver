@@ -12,8 +12,12 @@ import { useApp } from "../../src/state/AppContext";
 import { Banner, Button, Card, Empty, Pill, Row, Screen, Section } from "../../src/ui";
 import { BackBar } from "../../src/ui/BackBar";
 import { colors, fonts, space, type } from "../../src/theme";
+import { en } from "../../src/i18n/en.ts";
+import { dateLocale, type Key } from "../../src/i18n/index.ts";
+import { useT } from "../../src/i18n/react";
 
 export default function JobScreen() {
+  const t = useT();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { jobs, pending, act, profile, online, refresh, jobsLoading } = useApp();
@@ -43,7 +47,7 @@ export default function JobScreen() {
     return (
       <Screen onRefresh={() => void refresh()} refreshing={jobsLoading}>
         <BackBar onBack={() => router.back()} />
-        <Empty title="Job not found" body="It may have been reassigned or removed by the office." action={<Button label="Back to jobs" variant="secondary" onPress={() => router.replace("/(tabs)/jobs")} />} />
+        <Empty title={t("common.jobNotFound")} body={t("job.notFoundBody")} action={<Button label={t("job.backToJobs")} variant="secondary" onPress={() => router.replace("/(tabs)/jobs")} />} />
       </Screen>
     );
   }
@@ -61,19 +65,19 @@ export default function JobScreen() {
   const actions = () => {
     if (closed) return null;
     if (job.status !== "in_progress") {
-      return <Button label="Start job" size="xl" busy={busy === "start"} icon={<Play size={22} color={colors.primaryForeground} />}
-        accessibilityHint="Marks the job in progress and starts sharing your location"
+      return <Button label={t("common.startJob")} size="xl" busy={busy === "start"} icon={<Play size={22} color={colors.primaryForeground} />}
+        accessibilityHint={t("common.startJobHint")}
         onPress={() => run("start", () => act({ kind: "start_job", jobId: job.id }))} />;
     }
     if (current && next !== null) {
       return current.status === "arrived"
-        ? <Button label={`Complete stop ${next + 1}`} size="xl" variant="success" busy={busy === `completed-${next}`}
+        ? <Button label={t("job.completeStop", { n: next + 1 })} size="xl" variant="success" busy={busy === `completed-${next}`}
             icon={<CheckCircle2 size={22} color={colors.primaryForeground} />} onPress={() => void markStop(next, "completed")} />
-        : <Button label={`Arrive at stop ${next + 1}`} size="xl" busy={busy === `arrived-${next}`}
+        : <Button label={t("job.arriveStop", { n: next + 1 })} size="xl" busy={busy === `arrived-${next}`}
             icon={<CircleDot size={22} color={colors.primaryForeground} />} onPress={() => void markStop(next, "arrived")} />;
     }
     if (readyForPod(job)) {
-      return <Button label="Complete delivery (POD)" size="xl" variant="success" icon={<PackageCheck size={22} color={colors.primaryForeground} />}
+      return <Button label={t("job.completePod")} size="xl" variant="success" icon={<PackageCheck size={22} color={colors.primaryForeground} />}
         onPress={() => router.push({ pathname: "/pod/[id]", params: { id: String(job.id) } })} />;
     }
     return null;
@@ -87,8 +91,8 @@ export default function JobScreen() {
         <>
           {actions()}
           <View style={{ flexDirection: "row", gap: space.sm }}>
-            {target ? <Button style={{ flex: 1 }} label="Navigate" variant="secondary" icon={<Navigation size={20} color={colors.foreground} />} onPress={() => void openNavigation(target)} /> : null}
-            <Button style={{ flex: 1 }} label="Report issue" variant="secondary" icon={<AlertTriangle size={20} color={colors.warning} />}
+            {target ? <Button style={{ flex: 1 }} label={t("common.navigate")} variant="secondary" icon={<Navigation size={20} color={colors.foreground} />} onPress={() => void openNavigation(target)} /> : null}
+            <Button style={{ flex: 1 }} label={t("common.reportIssue")} variant="secondary" icon={<AlertTriangle size={20} color={colors.warning} />}
               onPress={() => router.push({ pathname: "/incident", params: { jobId: String(job.id) } })} />
           </View>
         </>
@@ -101,69 +105,70 @@ export default function JobScreen() {
           <Pill status={job.status} />
         </View>
         <Text style={type.title}>{job.customer}</Text>
-        {marks ? <Text style={[type.small, { color: colors.warning }]}>Some updates are saved on this phone and will sync automatically.</Text> : null}
+        {marks ? <Text style={[type.small, { color: colors.warning }]}>{t("job.someSaved")}</Text> : null}
       </View>
 
-      {job.status === "cancelled" ? <Banner tone="danger" title="This job was cancelled by the office" /> : null}
+      {job.status === "cancelled" ? <Banner tone="danger" title={t("job.cancelled")} /> : null}
       {job.status === "completed" ? (
-        <Banner tone="success" title={`Delivered ${job.completed_at ? formatClock(job.completed_at) : ""}`}
-          body={job.pod_status === "photo" ? "Proof of delivery: photo" : job.pod_status === "signed" ? "Proof of delivery: signature" : undefined} />
+        <Banner tone="success" title={t("job.delivered", { time: job.completed_at ? formatClock(job.completed_at) : "" })}
+          body={job.pod_status === "photo" ? t("job.podPhoto") : job.pod_status === "signed" ? t("job.podSigned") : undefined} />
       ) : null}
 
       {current && next !== null && job.status === "in_progress" ? (
-        <Card tone="primary" accessibilityLabel={`Current stop ${next + 1}: ${current.address}`}>
-          <Text style={type.label}>Current stop · {next + 1} of {stops.length}</Text>
+        <Card tone="primary" accessibilityLabel={t("job.currentStopA11y", { n: next + 1, address: current.address })}>
+          <Text style={type.label}>{t("job.currentStop", { n: next + 1, total: stops.length })}</Text>
           <Text style={type.title}>{current.address}</Text>
-          {current.window ? <Row label="Time window" value={current.window} /> : null}
-          {current.contact ? <Row label="Contact" value={current.contact} /> : null}
+          {current.window ? <Row label={t("job.timeWindow")} value={current.window} /> : null}
+          {current.contact ? <Row label={t("job.contact")} value={current.contact} /> : null}
           {current.notes ? <Text style={type.body}>{current.notes}</Text> : null}
-          <Pill status={current.status} label={current.status === "arrived" ? `Arrived ${formatClock(current.arrived_at)}` : "On the way"} />
-          {route ? <Row label="Distance · ETA" value={`${formatDistance(route.distanceKm)} · ${formatMinutes(route.minutes)} · ${formatClock(route.arrival)}`} /> : null}
-          {route?.trafficDelayMin ? <Text style={[type.small, { color: colors.warning }]}>+{route.trafficDelayMin} min traffic delay</Text> : null}
-          {next + 1 < stops.length ? <Text style={type.small}>Then: {stops[next + 1].address}</Text> : <Text style={type.small}>Last stop</Text>}
+          <Pill status={current.status} label={current.status === "arrived" ? t("job.arrivedAt", { time: formatClock(current.arrived_at) }) : t("job.onTheWay")} />
+          {route ? <Row label={t("common.distanceEta")} value={`${formatDistance(route.distanceKm)} · ${formatMinutes(route.minutes)} · ${formatClock(route.arrival)}`} /> : null}
+          {route?.trafficDelayMin ? <Text style={[type.small, { color: colors.warning }]}>{t("job.trafficDelay", { n: route.trafficDelayMin })}</Text> : null}
+          {next + 1 < stops.length ? <Text style={type.small}>{t("job.then", { address: stops[next + 1].address })}</Text> : <Text style={type.small}>{t("job.lastStop")}</Text>}
         </Card>
       ) : null}
 
       {!stops.length && route && !closed ? (
-        <Card><Row label={job.status === "in_progress" ? "To delivery" : "To collection"} value={`${formatDistance(route.distanceKm)} · ETA ${formatClock(route.arrival)}`} /></Card>
+        <Card><Row label={job.status === "in_progress" ? t("job.toDelivery") : t("job.toCollection")} value={`${formatDistance(route.distanceKm)} · ${t("job.eta", { time: formatClock(route.arrival) })}`} /></Card>
       ) : null}
 
-      {readyForPod(job) ? <Banner tone="info" title="All stops done" body="Capture proof of delivery to complete the job." /> : null}
+      {readyForPod(job) ? <Banner tone="info" title={t("job.allDoneTitle")} body={t("job.allDoneBody")} /> : null}
 
-      <Section title="Route">
+      <Section title={t("job.route")}>
         <Card>
           {legsOf(job).map((leg, i) => <LegRow key={i} leg={leg} isNext={leg.index !== null && leg.index === next && job.status === "in_progress"} pendingSync={leg.index !== null && !!marks?.stops.has(leg.index)} />)}
         </Card>
       </Section>
 
-      <Section title="Details">
+      <Section title={t("job.details")}>
         <Card>
-          {job.scheduled_date ? <Row label="Scheduled" value={new Date(job.scheduled_date + "T00:00:00").toLocaleDateString("en-GB")} /> : null}
-          {profile?.vehicle ? <Row label="Vehicle" value={`${profile.vehicle.vehicle_id}${profile.vehicle.registration ? ` · ${profile.vehicle.registration}` : ""}`} /> : null}
-          <Row label="Priority" value={job.priority} />
-          {job.driver_notes ? <View style={{ gap: 4 }}><Text style={type.label}>Special instructions</Text><Text style={type.body}>{job.driver_notes}</Text></View> : null}
+          {job.scheduled_date ? <Row label={t("common.scheduled")} value={new Date(job.scheduled_date + "T00:00:00").toLocaleDateString(dateLocale())} /> : null}
+          {profile?.vehicle ? <Row label={t("common.vehicle")} value={`${profile.vehicle.vehicle_id}${profile.vehicle.registration ? ` · ${profile.vehicle.registration}` : ""}`} /> : null}
+          <Row label={t("job.priority")} value={`priority.${job.priority}` in en ? t(`priority.${job.priority}` as Key) : job.priority} />
+          {job.driver_notes ? <View style={{ gap: 4 }}><Text style={type.label}>{t("job.instructions")}</Text><Text style={type.body}>{job.driver_notes}</Text></View> : null}
           {job.customer_phone ? (
-            <Button label={`Call ${job.customer_phone}`} variant="ghost" size="md" icon={<Phone size={18} color={colors.foreground} />}
+            <Button label={t("job.call", { phone: job.customer_phone })} variant="ghost" size="md" icon={<Phone size={18} color={colors.foreground} />}
               onPress={() => void Linking.openURL(`tel:${job.customer_phone}`)} />
           ) : null}
         </Card>
       </Section>
-      <Text style={[type.small, { textAlign: "center" }]}>Navigation apps are not HGV-aware: always follow road signs and height, width and weight limits.</Text>
+      <Text style={[type.small, { textAlign: "center" }]}>{t("job.hgvWarning")}</Text>
     </Screen>
   );
 }
 
 function LegRow({ leg, isNext, pendingSync }: { leg: RouteLeg; isNext: boolean; pendingSync: boolean }) {
+  const t = useT();
   const icon = leg.status === "completed" ? <CheckCircle2 size={22} color={colors.success} />
     : leg.status === "arrived" ? <CircleDot size={22} color={colors.primary} /> : <Circle size={22} color={isNext ? colors.primary : colors.mutedForeground} />;
-  const when = leg.status === "completed" ? (leg.completed_at ? `Done ${formatClock(leg.completed_at)}` : "Done") : leg.status === "arrived" ? (leg.arrived_at ? `Arrived ${formatClock(leg.arrived_at)}` : "Arrived") : isNext ? "Next" : "Pending";
+  const when = leg.status === "completed" ? (leg.completed_at ? t("job.leg.doneAt", { time: formatClock(leg.completed_at) }) : t("job.leg.done")) : leg.status === "arrived" ? (leg.arrived_at ? t("job.leg.arrivedAt", { time: formatClock(leg.arrived_at) }) : t("job.leg.arrived")) : isNext ? t("job.leg.next") : t("job.leg.pending");
   return (
     <View style={{ flexDirection: "row", gap: 12, alignItems: "flex-start", paddingVertical: 6 }} accessible accessibilityLabel={`${leg.label}, ${leg.address}, ${when}`}>
       {icon}
       <View style={{ flex: 1, gap: 2 }}>
         <Text style={[type.label, isNext && { color: colors.primary }]}>{leg.label}{leg.window ? ` · ${leg.window}` : ""}</Text>
         <Text style={[type.body, leg.status === "completed" && { color: colors.mutedForeground }]}>{leg.address}</Text>
-        <Text style={[type.small, pendingSync && { color: colors.warning }]}>{when}{pendingSync ? " · waiting to sync" : ""}</Text>
+        <Text style={[type.small, pendingSync && { color: colors.warning }]}>{when}{pendingSync ? t("job.leg.waitingSync") : ""}</Text>
       </View>
     </View>
   );

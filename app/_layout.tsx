@@ -14,6 +14,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AppProvider, useApp } from "../src/state/AppContext";
 import { colors } from "../src/theme";
+import { loadLang } from "../src/i18n/react";
 
 void SplashScreen.preventAutoHideAsync().catch(() => {});
 
@@ -50,7 +51,9 @@ function Gate() {
 
 export default function RootLayout() {
   const [loaded] = useFonts({ Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold, JetBrainsMono_500Medium, JetBrainsMono_700Bold });
-  if (!loaded) return null;
+  const [langReady, setLangReady] = React.useState(false);
+  useEffect(() => { void loadLang().finally(() => setLangReady(true)); }, []);
+  if (!loaded || !langReady) return null;
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: colors.background }}>
       <SafeAreaProvider>

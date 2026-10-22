@@ -14,6 +14,7 @@ import { registerPush, registerPushOnStart, type PromptMemory, type PushStatus }
 import { kv } from "../lib/storage";
 import { api } from "../lib/supabase";
 import { colors } from "../theme";
+import { t } from "../i18n/index.ts";
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({ shouldShowBanner: true, shouldShowList: true, shouldPlaySound: true, shouldSetBadge: true }),
@@ -50,7 +51,7 @@ export async function registerForPush(driverId: number, ask: boolean | "once"): 
     prepare: async () => {
       if (Platform.OS === "android") {
         await Notifications.setNotificationChannelAsync("default", {
-          name: "Jobs and messages", importance: Notifications.AndroidImportance.HIGH, lightColor: colors.primary, vibrationPattern: [0, 250, 250, 250],
+          name: t("notify.channel"), importance: Notifications.AndroidImportance.HIGH, lightColor: colors.primary, vibrationPattern: [0, 250, 250, 250],
         });
       }
     },
