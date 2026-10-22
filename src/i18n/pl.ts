@@ -367,6 +367,7 @@ export const pl: Record<Key, string> = {
   "incident.type.road_closure": "Zamknięta droga",
   "incident.type.load_damage": "Uszkodzony ładunek",
   "incident.type.theft": "Kradzież",
+  "incident.type.near_miss": "Sytuacja niebezpieczna",
   "incident.type.other": "Inne",
   "incident.reported": "Problem zgłoszony",
   "incident.sent": "Twoje zgłoszenie zostało wysłane do biura.",

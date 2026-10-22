@@ -367,6 +367,7 @@ export const ro: Record<Key, string> = {
   "incident.type.road_closure": "Drum închis",
   "incident.type.load_damage": "Marfă deteriorată",
   "incident.type.theft": "Furt",
+  "incident.type.near_miss": "Aproape accident",
   "incident.type.other": "Altele",
   "incident.reported": "Problemă raportată",
   "incident.sent": "Raportul tău a fost trimis la birou.",

@@ -379,6 +379,7 @@ export const en = {
   "incident.type.road_closure": "Road closure",
   "incident.type.load_damage": "Load damage",
   "incident.type.theft": "Theft",
+  "incident.type.near_miss": "Near miss",
   "incident.type.other": "Other",
   "incident.reported": "Issue reported",
   "incident.sent": "The office has been sent your report.",
