@@ -1,0 +1,14 @@
+export const Accuracy = { Balanced: 3, High: 4 };
+export const ActivityType = { AutomotiveNavigation: 2 };
+export type LocationObject = { coords: { latitude: number; longitude: number; accuracy: number | null; speed: number | null; heading: number | null }; timestamp: number };
+const granted = { status: "granted", granted: true };
+export const hasServicesEnabledAsync = async () => true;
+export const getForegroundPermissionsAsync = async () => granted;
+export const getBackgroundPermissionsAsync = async () => granted;
+export const requestForegroundPermissionsAsync = async () => granted;
+export const requestBackgroundPermissionsAsync = async () => granted;
+export const hasStartedLocationUpdatesAsync = async () => true;
+export const startLocationUpdatesAsync = async () => {};
+export const stopLocationUpdatesAsync = async () => {};
+export const getLastKnownPositionAsync = async () => ({ coords: { latitude: 52.2405, longitude: -0.9027 } });
+export const getCurrentPositionAsync = async () => ({ coords: { latitude: 52.2405, longitude: -0.9027 } });
