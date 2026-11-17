@@ -136,7 +136,7 @@ export function Segmented<T extends string>({ value, options, onChange, label }:
           <Pressable key={o.value} onPress={() => onChange(o.value)} accessibilityRole="radio" accessibilityState={{ selected: on }}
             accessibilityLabel={`${label ? label + ": " : ""}${o.label}`}
             style={({ pressed }) => [s.segment, on && { backgroundColor: c, borderColor: c }, pressed && { opacity: 0.8 }]}>
-            <Text style={[s.segmentText, on && { color: colors.primaryForeground }]}>{o.label}</Text>
+            <Text style={[s.segmentText, on && { color: colors.primaryForeground }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>{o.label}</Text>
           </Pressable>
         );
       })}

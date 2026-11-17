@@ -84,9 +84,9 @@ export default function Home() {
       <Section title={active?.status === "in_progress" ? t("home.currentJob") : t("home.nextJob")}>
         {active ? (
           <Card tone="primary">
-            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-              <Text style={{ fontFamily: fonts.monoBold, fontSize: 18, color: colors.primary }}>{active.reference}</Text>
-              <Pill status={active.status} />
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
+              <Text style={{ fontFamily: fonts.monoBold, fontSize: 18, color: colors.primary, flexShrink: 1 }} numberOfLines={1} ellipsizeMode="middle">{active.reference}</Text>
+              <View style={{ flexShrink: 0 }}><Pill status={active.status} /></View>
             </View>
             <Text style={type.title} numberOfLines={2}>{active.customer}</Text>
             {active.pickup_address ? <Row label={t("stop.collection")} value={active.pickup_address} /> : null}

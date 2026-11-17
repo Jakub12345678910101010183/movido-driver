@@ -29,7 +29,8 @@ export function StatusStrip() {
       ? { icon: <MapPin size={15} color={colors.warning} />, text: t("strip.locOffline", { n: gps.queued }), c: colors.warning }
       : { icon: <MapPin size={15} color={colors.primary} />, text: `${t("strip.locActive")}${gps.lastSentAt ? t("strip.sentAt", { time: formatClock(gps.lastSentAt) }) : ""}${perm === "granted_foreground" ? t("strip.appOnly") : ""}`, c: colors.primary };
 
-  const syncText = failed ? t("strip.attention", { n: failed }) : pending ? t("strip.toSync", { n: pending }) : null;
+  // Failures are shown by the "Sync problem" banner right below; no second red line here.
+  const syncText = !failed && pending ? t("strip.toSync", { n: pending }) : null;
   const label = [net.text, loc.text, syncText].filter(Boolean).join(". ");
 
   return (

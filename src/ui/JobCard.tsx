@@ -26,8 +26,8 @@ export function JobCard({ job, pending, onPress }: { job: Job; pending?: boolean
   return (
     <Card onPress={onPress} accessibilityLabel={label} tone={job.status === "in_progress" ? "primary" : undefined}>
       <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
-        <Text style={{ fontFamily: fonts.monoBold, fontSize: 16, color: colors.primary }}>{job.reference}</Text>
-        <View style={{ flexDirection: "row", gap: 6, alignItems: "center" }}>
+        <Text style={{ fontFamily: fonts.monoBold, fontSize: 16, color: colors.primary, flexShrink: 1 }} numberOfLines={1} ellipsizeMode="middle">{job.reference}</Text>
+        <View style={{ flexDirection: "row", gap: 6, alignItems: "center", flexShrink: 0 }}>
           {job.priority === "urgent" || job.priority === "high" ? <Pill label={t(job.priority === "urgent" ? "priority.urgent" : "priority.high")} tone="danger" /> : null}
           <Pill status={job.status} />
         </View>

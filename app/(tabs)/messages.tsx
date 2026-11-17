@@ -11,7 +11,10 @@ import { formatClock } from "../../src/services/navigation";
 import { useApp } from "../../src/state/AppContext";
 import { Empty, SyncBar } from "../../src/ui";
 import { colors, fonts, radius, space, TOUCH, type } from "../../src/theme";
+import { dateLocale } from "../../src/i18n/index.ts";
 import { useT } from "../../src/i18n/react";
+
+const dayKey = (iso: string) => { const d = new Date(iso); return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`; };
 
 type Row = Message & { pending?: boolean };
 
@@ -61,11 +64,28 @@ export default function Messages() {
           contentContainerStyle={{ padding: space.lg, gap: space.sm, flexGrow: 1 }}
           onContentSizeChange={() => list.current?.scrollToEnd({ animated: false })}
           ListEmptyComponent={<Empty title={t("msg.emptyTitle")} body={t("msg.emptyBody")} />}
-          renderItem={({ item: m }) => {
+          renderItem={({ item: m, index }) => {
+            const prev = index > 0 ? all[index - 1] : null;
+            const newDay = !prev || dayKey(prev.created_at) !== dayKey(m.created_at);
+            const dayLabel = (() => {
+              const d = new Date(m.created_at); const today = new Date();
+              const y = new Date(); y.setDate(today.getDate() - 1);
+              if (dayKey(m.created_at) === dayKey(today.toISOString())) return t("date.today");
+              if (dayKey(m.created_at) === dayKey(y.toISOString())) return t("date.yesterday");
+              return d.toLocaleDateString(dateLocale(), { weekday: "short", day: "numeric", month: "short", ...(d.getFullYear() !== today.getFullYear() ? { year: "numeric" } : {}) });
+            })();
             const mine = m.sender_id === uid;
             const broadcast = m.recipient_id === "broadcast";
             const urgent = m.channel === "alert";
             return (
+              <View>
+              {newDay ? (
+                <View style={{ flexDirection: "row", alignItems: "center", gap: space.sm, marginVertical: space.sm }} accessibilityRole="header">
+                  <View style={{ flex: 1, height: 1, backgroundColor: colors.border }} />
+                  <Text style={[type.label, { fontSize: 12 }]}>{dayLabel}</Text>
+                  <View style={{ flex: 1, height: 1, backgroundColor: colors.border }} />
+                </View>
+              ) : null}
               <View style={{ alignItems: mine ? "flex-end" : "flex-start" }} accessible
                 accessibilityLabel={`${mine ? t("msg.you") : broadcast ? t("msg.officeBroadcast") : t("msg.office")}${urgent ? t("msg.urgentA11y") : ""}: ${m.content}. ${formatClock(m.created_at)}${m.pending ? t("msg.sendingA11y") : ""}`}>
                 <View style={{ maxWidth: "85%", borderRadius: radius.xl, padding: space.md, gap: 4, borderWidth: 1,
@@ -80,6 +100,7 @@ export default function Messages() {
                   <Text style={type.body}>{m.content}</Text>
                   <Text style={[type.small, { fontSize: 12 }]}>{m.pending ? t("msg.sending") : formatClock(m.created_at)}{mine && !m.pending ? t("msg.sent") : ""}</Text>
                 </View>
+              </View>
               </View>
             );
           }}
