@@ -5,6 +5,7 @@
 import NetInfo from "@react-native-community/netinfo";
 import type { Session } from "@supabase/supabase-js";
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { router } from "expo-router";
 import { AppState } from "react-native";
 import { GPS_DEFAULTS } from "../config";
 import { describeError } from "../core/errors.ts";
@@ -14,11 +15,14 @@ import { shouldRecheckOnAppState, shouldRegisterOnStart } from "../core/push.ts"
 import type { DriverProfile, Job, Message } from "../core/types.ts";
 import { api, supabase } from "../lib/supabase";
 import { clearDriverData, readJSON, writeJSON } from "../lib/storage";
-import { isTracking, permissionState, requestPermissions, startTracking, stopTracking, type LocationPermission } from "../services/location";
+import { isTracking, permissionState, startTracking, stopTracking, type LocationPermission } from "../services/location";
 import { registerForPush, unregisterPush, type PushStatus } from "../services/notifications";
 import { gpsQueue, newId, outbox, syncNow } from "../services/sync";
 import type { GpsState } from "../core/gpsQueue.ts";
 import { t } from "../i18n/index.ts";
+
+// The location disclosure opens by itself at most once per app run.
+let disclosureShown = false;
 
 export type AuthState = "loading" | "signed_out" | "not_driver" | "disabled" | "ready";
 export type SyncState = "online" | "offline" | "syncing" | "error";
@@ -200,13 +204,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       if (!hasActiveJob) return stopTracking();
       // Ask when it makes sense to the driver: the moment a job is under way.
       const perm = await permissionState().catch(() => null);
-      if (perm === "undetermined") await requestPermissions().catch(() => null);
+      // Prominent disclosure first (Google Play): the OS prompt only follows its "Continue".
+      if (perm === "undetermined" && !disclosureShown) { disclosureShown = true; router.push("/location-disclosure"); }
       return startTracking(settings);
     };
     void run().finally(() => { void refreshGps(); });
     const t = setInterval(() => { void refreshGps(); }, 30_000);
     return () => clearInterval(t);
-  }, [auth, profile, hasActiveJob, refreshGps]);
+  }, [auth, profile, hasActiveJob, refreshGps, gps.permission]);
 
   // ---------- push ----------
   useEffect(() => {

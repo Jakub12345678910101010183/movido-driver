@@ -472,6 +472,18 @@ export const en = {
   "err.generic": "Something went wrong.",
   "err.network": "No connection. It will be sent when you are back online.",
   "err.tryAgain": "Something went wrong. Please try again.",
+  "disclosure.title": "Location while you drive",
+  "disclosure.body": "MOViDO Driver collects your phone's location, including when the app is closed or not in use, while you have a job in progress.",
+  "disclosure.whenTitle": "When",
+  "disclosure.when": "Only from the moment you start a job until it is completed. When no job is in progress, location is not collected.",
+  "disclosure.whyTitle": "Why",
+  "disclosure.why": "So your office can see where the vehicle is, arrivals at stops are recorded automatically (Auto-Arrive), and deliveries are confirmed with the time and place.",
+  "disclosure.whoTitle": "Who sees it",
+  "disclosure.who": "Only your company, through MOViDO. It is not sold or used for advertising. On the next screen choose \"Allow all the time\" so arrivals are recorded while the phone is locked or navigating.",
+  "disclosure.privacy": "Privacy policy",
+  "disclosure.continue": "Continue",
+  "disclosure.notNow": "Not now",
+  "more.privacy": "Privacy policy",
 } as const;
 
 export type Key = keyof typeof en;

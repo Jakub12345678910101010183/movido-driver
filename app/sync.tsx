@@ -5,7 +5,6 @@ import { MapPin, RefreshCw, Trash2 } from "lucide-react-native";
 import React from "react";
 import { Alert, Linking, Text, View } from "react-native";
 import { HELD_NOTE, type OutboxItem } from "../src/core/outbox.ts";
-import { requestPermissions } from "../src/services/location";
 import { formatClock } from "../src/services/navigation";
 import { outbox } from "../src/services/sync";
 import { useApp } from "../src/state/AppContext";
@@ -34,9 +33,10 @@ export default function Sync() {
   const router = useRouter();
   const { outboxItems, online, syncNow, gps, refreshGps, sync } = useApp();
 
+  // Not asked yet → the disclosure (which then asks). Already answered → Settings.
   const fixLocation = async () => {
-    const r = await requestPermissions();
-    if (r !== "granted_always") {
+    if (gps.permission === "undetermined" || gps.permission === null) return router.push("/location-disclosure");
+    if (gps.permission === "services_off" || gps.permission === "denied" || gps.permission === "granted_foreground") {
       Alert.alert(t("sync.allowAlways"), t("sync.allowAlwaysBody"),
         [{ text: t("common.later"), style: "cancel" }, { text: t("common.openSettings"), onPress: () => void Linking.openSettings() }]);
     }

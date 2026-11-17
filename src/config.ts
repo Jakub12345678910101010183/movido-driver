@@ -8,6 +8,7 @@ export const TOMTOM_KEY = process.env.EXPO_PUBLIC_TOMTOM_API_KEY ?? "";
 
 export const WEB_URL = "https://www.movidologistics.uk";
 export const SUPPORT_EMAIL = "movidologistics@gmail.com";
+export const PRIVACY_URL = `${WEB_URL}/privacy`;
 
 /**
  * GPS defaults. The live values come from the server per company

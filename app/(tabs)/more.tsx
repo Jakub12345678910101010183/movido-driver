@@ -4,7 +4,7 @@ import { useRouter } from "expo-router";
 import { Bell, ClipboardCheck, Fuel, LogOut, MapPin, RefreshCw, TriangleAlert, User } from "lucide-react-native";
 import React from "react";
 import { Alert, Linking, Text, View } from "react-native";
-import { SUPPORT_EMAIL } from "../../src/config";
+import { PRIVACY_URL, SUPPORT_EMAIL } from "../../src/config";
 import { turnOnAction } from "../../src/core/push.ts";
 import { useApp } from "../../src/state/AppContext";
 import { Banner, Button, Card, Row, Screen, Section, Segmented } from "../../src/ui";
@@ -81,6 +81,7 @@ export default function More() {
       {pending ? <Banner tone="warning" title={t("more.waitingTitle", { n: pending })} body={t("more.waitingBody")} /> : null}
       <Button label={t("common.signOut")} variant="danger" icon={<LogOut size={20} color="#fff" />} onPress={confirmSignOut} />
       <Text style={[type.small, { textAlign: "center" }]}>{t("common.help")} <Text style={{ color: colors.primary }} onPress={() => void Linking.openURL(`mailto:${SUPPORT_EMAIL}`)}>{SUPPORT_EMAIL}</Text></Text>
+      <Text style={[type.small, { textAlign: "center", color: colors.primary }]} onPress={() => void Linking.openURL(PRIVACY_URL)}>{t("more.privacy")}</Text>
     </Screen>
   );
 }
