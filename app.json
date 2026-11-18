@@ -35,7 +35,7 @@
       "versionCode": 1,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#000001"
+        "backgroundColor": "#062022"
       },
       "permissions": [
         "android.permission.ACCESS_COARSE_LOCATION",
